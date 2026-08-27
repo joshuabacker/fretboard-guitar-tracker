@@ -656,6 +656,48 @@
 
   .session-add-entry-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* ===== AI INSIGHTS ===== */
+  .insights-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .insight-section {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insight-section:last-child { border-bottom: none; }
+
+  .insight-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .insight-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .insight-encouragement {
+    background: var(--accent-glow);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    border: 1px solid var(--accent);
+    border-bottom: 1px solid var(--accent) !important;
+  }
+
+  .insight-encouragement .insight-text {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
   /* ===== EMPTY STATE ===== */
   .empty-state {
     text-align: center;
@@ -978,6 +1020,13 @@
 
   <!-- Insights View -->
   <div id="view-insights" style="display:none;">
+    <!-- AI Weekly Insights -->
+    <div class="suggestion-card">
+      <h3>🤖 Weekly AI Insights</h3>
+      <div id="ai-insights-content">
+        <p style="color:var(--muted)">Log practice sessions to get AI-generated insights about your habits and progress.</p>
+      </div>
+    </div>
     <div class="stats-row" id="stats-row"></div>
     <div class="weekly-chart">
       <h3>📊 This Week</h3>
@@ -1330,6 +1379,7 @@ function renderDashboard() {
 function renderInsights() {
   renderStats();
   renderWeeklyChart();
+  fetchAIInsights();
 }
 
 // ===== GROQ LLM CONFIG =====
@@ -1490,6 +1540,166 @@ function renderRulesBasedSuggestions() {
 
   html += '</ul>';
   container.innerHTML += html;
+}
+
+// ===== AI WEEKLY INSIGHTS =====
+async function fetchAIInsights() {
+  const container = document.getElementById('ai-insights-content');
+  if (!container) return;
+  const allEntries = sessions.flatMap(s => s.entries.map(e => ({...e, sessionDate: s.date})));
+
+  if (allEntries.length === 0) {
+    container.innerHTML = `<p style="color:var(--muted)">Log practice sessions to get AI-generated insights about your habits and progress.</p>`;
+    return;
+  }
+
+  // Show loading
+  container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted);">🤖 Analyzing your practice habits...</div>`;
+
+  // Build a comprehensive summary for the last 7 days + all-time stats
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+  const weekSessions = sessions.filter(s => s.date >= weekAgoStr);
+  const weekEntries = weekSessions.flatMap(s => s.entries);
+
+  // Category breakdown (all-time)
+  const categoryStats = {};
+  Object.keys(CATEGORIES).forEach(cat => {
+    const catEntries = allEntries.filter(e => e.category === cat);
+    const totalMin = catEntries.reduce((sum, e) => sum + (e.duration || 0), 0);
+    const lastDate = catEntries.length > 0
+      ? catEntries[catEntries.length - 1].sessionDate
+      : 'never';
+    categoryStats[cat] = {
+      sessions: catEntries.length,
+      totalMinutes: totalMin,
+      lastPracticed: lastDate,
+      recentNotes: catEntries.slice(-5).map(e => e.notes || '').filter(n => n).join(' | ')
+    };
+  });
+
+  // This week breakdown
+  const weekCategoryStats = {};
+  Object.keys(CATEGORIES).forEach(cat => {
+    const catEntries = weekEntries.filter(e => e.category === cat);
+    const totalMin = catEntries.reduce((sum, e) => sum + (e.duration || 0), 0);
+    weekCategoryStats[cat] = { sessions: catEntries.length, totalMinutes: totalMin };
+  });
+
+  const totalMin = allEntries.reduce((s, e) => s + (e.duration || 0), 0);
+  const weekTotalMin = weekEntries.reduce((s, e) => s + (e.duration || 0), 0);
+
+  const summary = `
+ALL-TIME STATS:
+- Total sessions: ${sessions.length}
+- Total practice minutes: ${totalMin}
+- Practice days: ${new Set(sessions.map(s => s.date)).size}
+
+THIS WEEK (last 7 days):
+- Sessions: ${weekSessions.length}
+- Practice minutes: ${weekTotalMin}
+- Days practiced: ${new Set(weekSessions.map(s => s.date)).size}
+
+CATEGORY BREAKDOWN (all-time):
+${Object.entries(categoryStats).map(([cat, stats]) => {
+  const label = CATEGORIES[cat].label;
+  return `- ${label}: ${stats.sessions} sessions, ${stats.totalMinutes} min total, last practiced ${stats.lastPracticed}${stats.recentNotes ? ', recent notes: ' + stats.recentNotes : ''}`;
+}).join('\n')}
+
+THIS WEEK BY CATEGORY:
+${Object.entries(weekCategoryStats).map(([cat, stats]) => {
+  const label = CATEGORIES[cat].label;
+  return `- ${label}: ${stats.sessions} sessions, ${stats.totalMinutes} min`;
+}).join('\n')}
+
+RECENT SESSION DATES:
+${sessions.slice(-10).sort((a,b) => b.date.localeCompare(a.date)).map(s => `- ${s.date}: ${s.entries.length} entries, ${s.entries.reduce((sum, e) => sum + (e.duration || 0), 0)} min`).join('\n')}
+`;
+
+  const prompt = `You are a guitar practice coach analyzing a student's practice data. Based on the data below, provide insightful observations about their practice habits and progress.
+
+${summary}
+
+Provide your analysis as JSON with this structure:
+{
+  "summary": "A 2-3 sentence overview of their practice this week",
+  "strengths": ["What they're doing well", "Another strength"],
+  "areas_to_improve": ["Specific actionable improvement with reasoning", "Another area"],
+  "patterns": "1-2 sentences about any patterns you notice (consistency, imbalances, etc.)",
+  "encouragement": "A supportive, specific note about their progress"
+}
+
+Be specific and reference their actual practice data. If they haven't practiced much this week, be encouraging but honest.`;
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: 'You are a knowledgeable, encouraging guitar practice coach. You analyze practice data and give specific, actionable insights. Always respond with valid JSON when asked.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7
+      })
+    });
+
+    const data = await response.json();
+    let text = data.choices[0].message.content;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in response');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    let html = '<div class="insights-container">';
+
+    // Summary
+    if (parsed.summary) {
+      html += `<div class="insight-section"><div class="insight-label">Summary</div><div class="insight-text">${escapeHtml(parsed.summary)}</div></div>`;
+    }
+
+    // Strengths
+    if (parsed.strengths && parsed.strengths.length > 0) {
+      html += '<div class="insight-section"><div class="insight-label">💪 What You\'re Doing Well</div><ul class="suggestion-list">';
+      parsed.strengths.forEach(s => {
+        html += `<li class="suggestion-list-item"><span class="suggestion-bullet" style="background:var(--technique)"></span><span>${escapeHtml(s)}</span></li>`;
+      });
+      html += '</ul></div>';
+    }
+
+    // Areas to improve
+    if (parsed.areas_to_improve && parsed.areas_to_improve.length > 0) {
+      html += '<div class="insight-section"><div class="insight-label">🎯 Areas to Improve</div><ul class="suggestion-list">';
+      parsed.areas_to_improve.forEach(s => {
+        html += `<li class="suggestion-list-item"><span class="suggestion-bullet" style="background:var(--accent)"></span><span>${escapeHtml(s)}</span></li>`;
+      });
+      html += '</ul></div>';
+    }
+
+    // Patterns
+    if (parsed.patterns) {
+      html += `<div class="insight-section"><div class="insight-label">📊 Patterns</div><div class="insight-text">${escapeHtml(parsed.patterns)}</div></div>`;
+    }
+
+    // Encouragement
+    if (parsed.encouragement) {
+      html += `<div class="insight-section insight-encouragement"><div class="insight-text">${escapeHtml(parsed.encouragement)}</div></div>`;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+
+  } catch(err) {
+    console.error('AI insights failed:', err);
+    container.innerHTML = `<p style="color:var(--muted)">AI insights temporarily unavailable. Your practice data: ${sessions.length} sessions, ${totalMin} total minutes, ${new Set(sessions.map(s => s.date)).size} practice days.</p>`;
+  }
 }
 
 function renderStats() {
