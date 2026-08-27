@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1266,9 +1266,12 @@ async function syncNow() {
 
 // ===== THEME =====
 function loadTheme() {
-  const theme = localStorage.getItem('fretboard-theme') || 'dark';
+  const theme = localStorage.getItem('fretboard-theme') || 'light';
   document.documentElement.setAttribute('data-theme', theme);
-  document.getElementById('theme-label').textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+  const sidebarLabel = document.getElementById('theme-label');
+  if (sidebarLabel) sidebarLabel.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+  const mobileToggle = document.querySelector('.mini-theme-toggle');
+  if (mobileToggle) mobileToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
 }
 
 function toggleTheme() {
