@@ -781,47 +781,24 @@ let currentView = 'dashboard';
 let recognition = null;
 let isRecording = false;
 
-// ===== CLOUD SYNC (Supabase) =====
+// ===== CLOUD SYNC (Supabase) — hardcoded auto-connect =====
+const SUPABASE_URL = 'https://dswzxbarerwtpccuahmi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_I9oa-WnmZxRKNrmTgr21Ig_qNiihccW';
+
 let supabaseClient = null;
 let syncEnabled = false;
 let lastSyncTime = 0;
 
-const SUPABSE_CONFIG_KEY = 'guitar-practice-supabase-config';
-
 function initSupabase() {
-  const config = getSupabaseConfig();
-  if (config && config.url && config.key) {
-    try {
-      supabaseClient = supabase.createClient(config.url, config.key);
-      syncEnabled = true;
-      updateSyncStatus('online', 'Cloud sync ready');
-      // Auto-pull on load
-      pullFromCloud();
-    } catch(e) {
-      console.error('Supabase init failed:', e);
-      updateSyncStatus('offline', 'Cloud sync error');
-    }
-  } else {
-    updateSyncStatus('offline', 'Not connected');
-  }
-}
-
-function getSupabaseConfig() {
   try {
-    const stored = localStorage.getItem(SUPABSE_CONFIG_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch(e) { return null; }
-}
-
-function saveSupabaseConfig(url, key) {
-  localStorage.setItem(SUPABSE_CONFIG_KEY, JSON.stringify({ url, key }));
-}
-
-function clearSupabaseConfig() {
-  localStorage.removeItem(SUPABSE_CONFIG_KEY);
-  supabaseClient = null;
-  syncEnabled = false;
-  updateSyncStatus('offline', 'Not connected');
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    syncEnabled = true;
+    updateSyncStatus('syncing', 'Connecting to cloud...');
+    pullFromCloud();
+  } catch(e) {
+    console.error('Supabase init failed:', e);
+    updateSyncStatus('offline', 'Cloud sync error');
+  }
 }
 
 function updateSyncStatus(state, text) {
@@ -908,56 +885,20 @@ function showSyncModal() {
   const existing = document.getElementById('sync-modal-overlay');
   if (existing) existing.remove();
 
-  const config = getSupabaseConfig();
-  const url = config ? config.url : '';
-  const key = config ? config.key : '';
-
   const overlay = document.createElement('div');
   overlay.className = 'sync-modal-overlay';
   overlay.id = 'sync-modal-overlay';
   overlay.innerHTML = `
     <div class="sync-modal">
-      <h3>☁️ Cloud Sync Setup</h3>
-      <p>Connect a free Supabase project to sync your practice data across devices. Your data stays in your own database — nothing goes to a third party.</p>
-      <div class="form-group">
-        <label style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Supabase Project URL</label>
-        <input type="text" id="supabase-url" placeholder="https://xxxxx.supabase.co" value="${url}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; width:100%; box-sizing:border-box;">
+      <h3>☁️ Cloud Sync</h3>
+      <p>Your practice data syncs automatically to your Supabase database. Every entry you save is pushed to the cloud and pulled on every device load.</p>
+      <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px; margin:12px 0; font-size:13px;">
+        <div style="color:var(--muted); margin-bottom:4px;">Connected to:</div>
+        <div style="font-family:monospace; font-size:12px; word-break:break-all;">${SUPABASE_URL}</div>
       </div>
-      <div class="form-group">
-        <label style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Supabase Anon Key</label>
-        <input type="text" id="supabase-key" placeholder="eyJhbGciOi..." value="${key}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; width:100%; box-sizing:border-box;">
-      </div>
-      <details style="margin: 16px 0;">
-        <summary style="cursor:pointer; font-size:13px; color:var(--accent);">📝 First time? Click for setup steps</summary>
-        <div style="margin-top:12px;">
-          <p style="font-size:13px; color:var(--muted); line-height:1.6;">
-            1. Go to <a href="https://supabase.com" target="_blank" style="color:var(--accent);">supabase.com</a> and create a free account<br>
-            2. Create a new project (pick any name)<br>
-            3. Go to Settings → API<br>
-            4. Copy your <b>Project URL</b> and <b>anon public key</b><br>
-            5. Go to SQL Editor and run this:
-          </p>
-          <div class="sql-block">create table practice_entries (
-  id text primary key,
-  category text not null,
-  duration int default 0,
-  notes text,
-  timestamp bigint not null
-);
-
-alter table practice_entries
-  enable row level security;
-
-create policy "Public access"
-  on practice_entries for all
-  using (true) with check (true);</div>
-          <p style="font-size:13px; color:var(--muted);">6. Paste the URL and key above, click "Connect"</p>
-        </div>
-      </details>
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="closeSyncModal();">Cancel</button>
-        ${config ? '<button class="btn btn-secondary" style="color:var(--danger);" onclick="disconnectSync();">Disconnect</button>' : ''}
-        <button class="btn btn-primary" onclick="connectSync();">Connect</button>
+        <button class="btn btn-secondary" onclick="closeSyncModal();">Close</button>
+        <button class="btn btn-primary" onclick="syncNow(); closeSyncModal();">Sync Now</button>
       </div>
     </div>
   `;
@@ -970,37 +911,6 @@ create policy "Public access"
 function closeSyncModal() {
   const el = document.getElementById('sync-modal-overlay');
   if (el) el.remove();
-}
-
-async function connectSync() {
-  const url = document.getElementById('supabase-url').value.trim();
-  const key = document.getElementById('supabase-key').value.trim();
-
-  if (!url || !key) {
-    alert('Please enter both your Supabase URL and anon key.');
-    return;
-  }
-
-  try {
-    supabaseClient = supabase.createClient(url, key);
-    syncEnabled = true;
-    saveSupabaseConfig(url, key);
-    closeSyncModal();
-    updateSyncStatus('syncing', 'Connecting...');
-    await pullFromCloud();
-    // Push any local data to cloud
-    await pushToCloud();
-  } catch(err) {
-    alert('Failed to connect: ' + err.message);
-    syncEnabled = false;
-    updateSyncStatus('offline', 'Not connected');
-  }
-}
-
-function disconnectSync() {
-  clearSupabaseConfig();
-  closeSyncModal();
-  alert('Cloud sync disconnected. Your data is still saved locally on this device.');
 }
 
 async function syncNow() {
