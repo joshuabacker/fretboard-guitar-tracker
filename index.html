@@ -680,17 +680,15 @@
     </div>
   </div>
 
-  <!-- Entry View (Voice + Manual) -->
+  <!-- Entry View (Manual + Wispr Flow) -->
   <div id="view-entry" style="display:none;">
     <div class="voice-entry">
       <div class="voice-entry-header">
-        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()">🎙️</button>
         <div>
-          <div style="font-size:16px; font-weight:600;">Voice Entry</div>
-          <div class="voice-status" id="voice-status">Click the mic and describe what you practiced</div>
+          <div style="font-size:16px; font-weight:600;">New Practice Entry</div>
+          <div class="voice-status" id="voice-status">Log what you practiced — use Wispr Flow for voice dictation</div>
         </div>
       </div>
-      <div class="transcript-box empty" id="transcript-box">Your transcript will appear here...</div>
       <div class="entry-form">
         <div class="form-group">
           <label>Category</label>
@@ -708,7 +706,7 @@
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Notes</label>
-          <textarea id="form-notes" placeholder="What did you work on? (auto-filled from voice, editable)"></textarea>
+          <textarea id="form-notes" placeholder="What did you work on? (use Wispr Flow for voice dictation)" oninput="autoParseNotes()"></textarea>
         </div>
         <button class="save-btn" onclick="saveEntry()" style="grid-column: 1 / -1;">Save Entry</button>
       </div>
@@ -778,8 +776,6 @@ const CATEGORIES = {
 
 let entries = [];
 let currentView = 'dashboard';
-let recognition = null;
-let isRecording = false;
 
 // ===== CLOUD SYNC (Supabase) — hardcoded auto-connect =====
 const SUPABASE_URL = 'https://dswzxbarerwtpccuahmi.supabase.co';
@@ -1280,101 +1276,15 @@ function saveEntry() {
   // Reset form
   document.getElementById('form-notes').value = '';
   document.getElementById('form-duration').value = '';
-  document.getElementById('transcript-box').textContent = 'Your transcript will appear here...';
-  document.getElementById('transcript-box').classList.add('empty');
   
   renderAll();
   if (currentView !== 'dashboard') switchView(currentView);
 }
 
-// ===== VOICE ENTRY =====
-function toggleVoice() {
-  if (isRecording) {
-    stopVoice();
-    return;
-  }
-  
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Voice recognition is not supported in this browser. Try Chrome or Edge.');
-    return;
-  }
-  
-  recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-  
-  let fullTranscript = '';
-  const transcriptBox = document.getElementById('transcript-box');
-  const voiceStatus = document.getElementById('voice-status');
-  const micBtn = document.getElementById('mic-btn');
-  
-  recognition.onresult = (event) => {
-    let interim = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        fullTranscript += transcript + ' ';
-      } else {
-        interim += transcript;
-      }
-    }
-    transcriptBox.textContent = (fullTranscript + interim).trim() || 'Listening...';
-    transcriptBox.classList.remove('empty');
-    
-    // Auto-fill the notes field
-    document.getElementById('form-notes').value = (fullTranscript + interim).trim();
-  };
-  
-  recognition.onerror = (event) => {
-    console.error('Speech recognition error:', event.error);
-    if (event.error === 'no-speech') {
-      voiceStatus.textContent = 'No speech detected — try again';
-    } else if (event.error === 'not-allowed') {
-      voiceStatus.textContent = 'Microphone access denied';
-    } else {
-      voiceStatus.textContent = 'Error: ' + event.error;
-    }
-    stopVoice();
-  };
-  
-  recognition.onend = () => {
-    if (isRecording) {
-      // Restart if still recording (continuous mode can stop)
-      try { recognition.start(); } catch(e) {}
-    }
-  };
-  
-  recognition.start();
-  isRecording = true;
-  micBtn.classList.add('recording');
-  micBtn.textContent = '⏹';
-  voiceStatus.textContent = 'Listening... speak naturally about your practice';
-  voiceStatus.classList.add('listening');
-  transcriptBox.textContent = 'Listening...';
-  transcriptBox.classList.remove('empty');
-}
-
-function stopVoice() {
-  if (recognition) {
-    isRecording = false;
-    recognition.stop();
-    const micBtn = document.getElementById('mic-btn');
-    micBtn.classList.remove('recording');
-    micBtn.textContent = '🎙️';
-    document.getElementById('voice-status').textContent = 'Transcribed — review and save';
-    document.getElementById('voice-status').classList.remove('listening');
-    
-    // Try to auto-detect category and duration from transcript
-    autoParseTranscript();
-  }
-}
-
-function autoParseTranscript() {
+// ===== AUTO-DETECT CATEGORY FROM NOTES =====
+function autoParseNotes() {
   const text = document.getElementById('form-notes').value.toLowerCase();
   
-  // Auto-detect category
   const categoryMap = {
     scales: ['scale', 'pentatonic', 'mode', 'ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian', 'chromatic', 'arpeggio'],
     rhythm: ['rhythm', 'strum', 'chord change', 'timing', 'beat', 'groove', 'syncopat', 'time signature', 'meter'],
@@ -1398,7 +1308,7 @@ function autoParseTranscript() {
     document.getElementById('form-category').value = bestCat;
   }
   
-  // Auto-detect duration (e.g., "20 minutes", "30 min", "practiced for 15")
+  // Auto-detect duration (e.g., "20 minutes", "30 min")
   const durMatch = text.match(/(\d+)\s*(min|minute)/);
   if (durMatch) {
     document.getElementById('form-duration').value = parseInt(durMatch[1]);
