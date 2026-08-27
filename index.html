@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎸 Fretboard — Guitar Practice Tracker</title>
+<title>🎸 FretForward — Guitar Practice Tracker</title>
 <style>
   /* ===== 60s STRAT THEME ===== */
   /* Dark mode (Sonic Blue / Daphne Blue strat) */
@@ -782,7 +782,7 @@
 <!-- ===== SIDEBAR ===== -->
 <div class="sidebar">
   <div class="sidebar-header">
-    <h1>🎸 Fretboard</h1>
+    <h1>🎸 FretForward</h1>
     <p>Guitar Practice Tracker</p>
   </div>
 
@@ -820,7 +820,7 @@
 <div class="main" id="main-content">
   <!-- Mobile top bar -->
   <div class="mobile-top-bar">
-    <div class="app-name">🎸 Fretboard</div>
+    <div class="app-name">🎸 FretForward</div>
     <button class="mini-theme-toggle" onclick="toggleTheme()">🌙</button>
   </div>
 
@@ -1191,7 +1191,7 @@ async function fetchAISuggestions() {
   if (allEntries.length === 0) {
     container.innerHTML = `
       <div style="margin-bottom:16px; font-size:15px; line-height:1.6;">
-        Welcome to Fretboard! Log your first practice session to get personalized AI suggestions.
+        Welcome to FretForward! Log your first practice session to get personalized AI suggestions.
       </div>
       <div class="suggestion-grid">
         ${Object.entries(CATEGORIES).map(([key, cat]) => {
