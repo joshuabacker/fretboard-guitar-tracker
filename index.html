@@ -249,54 +249,89 @@
     font-family: var(--font-sans);
   }
 
-  .suggestion-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
+  /* ===== SUGGESTION LIST (bulleted) ===== */
+  .suggestion-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
   }
 
-  .suggestion-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    transition: transform 0.15s, border-color 0.15s;
+  .suggestion-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
   }
 
-  .suggestion-item:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent);
-    box-shadow: var(--glow-amber);
+  .suggestion-list-item:last-child { border-bottom: none; }
+
+  .suggestion-bullet {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 7px;
+    background: var(--muted);
   }
 
-  .suggestion-item .cat-label {
-    font-size: 12px;
+  .suggestion-bullet.high { background: var(--danger); }
+  .suggestion-bullet.medium { background: var(--accent); }
+  .suggestion-bullet.low { background: var(--muted); }
+
+  .suggestion-list-item .sugg-area {
     font-weight: 700;
+    color: var(--accent);
+    margin-right: 6px;
+  }
+
+  .suggestion-list-item .sugg-priority {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-left: 12px;
+  }
+
+  /* ===== BIG CTA BUTTON ===== */
+  .cta-button {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 20px 28px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
     font-family: var(--font-sans);
+    box-shadow: var(--glow-amber);
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-bottom: 28px;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .suggestion-item .rec-text {
-    font-size: 14px;
-    color: var(--text);
-    line-height: 1.5;
-    font-family: var(--font-sans);
+  .cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px -5px rgba(255, 158, 59, 0.45);
   }
 
-  .suggestion-item .priority {
-    font-size: 11px;
-    margin-top: 8px;
-    color: var(--muted);
-    font-family: var(--font-sans);
+  .cta-button:active {
+    transform: translateY(0);
   }
 
-  .suggestion-item.high { border-left: 3px solid var(--danger); }
-  .suggestion-item.med { border-left: 3px solid var(--accent); }
-  .suggestion-item.low { border-left: 3px solid var(--muted); }
+  .cta-button .cta-icon {
+    font-size: 24px;
+  }
 
   /* ===== STATS ===== */
   .stats-row {
@@ -801,16 +836,20 @@
   <div class="nav-section">
     <div class="nav-item active" data-view="dashboard">
       <span class="nav-dot" style="background:var(--accent)"></span>
-      🏠 Dashboard
+      🏠 Home
+    </div>
+    <div class="nav-item" data-view="new">
+      <span class="nav-dot" style="background:var(--accent)"></span>
+      ✏️ New Session
     </div>
     <div class="nav-item" data-view="sessions">
       <span class="nav-dot" style="background:var(--muted)"></span>
-      📅 Practice Sessions
+      📅 Sessions
       <span class="nav-count" id="count-sessions">0</span>
     </div>
-    <div class="nav-item" data-view="new">
-      <span class="nav-dot" style="background:var(--strat-body)"></span>
-      ✏️ New Session
+    <div class="nav-item" data-view="insights">
+      <span class="nav-dot" style="background:var(--cyan)"></span>
+      💡 Insights
     </div>
   </div>
 
@@ -845,12 +884,23 @@
 
   <!-- Dashboard View -->
   <div id="view-dashboard">
+    <!-- Big New Session CTA -->
+    <button class="cta-button" onclick="switchView('new')">
+      <span class="cta-icon">✏️</span>
+      <span>Start a New Practice Session</span>
+    </button>
+
+    <!-- AI Suggestions as bulleted list -->
     <div class="suggestion-card">
       <h3>🎯 What to Practice Today</h3>
       <div id="suggestion-content">
         <p style="color:var(--muted)">Start logging practice sessions to get personalized recommendations.</p>
       </div>
     </div>
+  </div>
+
+  <!-- Insights View -->
+  <div id="view-insights" style="display:none;">
     <div class="stats-row" id="stats-row"></div>
     <div class="weekly-chart">
       <h3>📊 This Week</h3>
@@ -908,14 +958,18 @@
       <span class="nav-icon">🏠</span>
       <span>Home</span>
     </div>
+    <div class="bottom-nav-item" data-view="new" onclick="switchView('new')">
+      <span class="nav-icon">✏️</span>
+      <span>New</span>
+    </div>
     <div class="bottom-nav-item" data-view="sessions" onclick="switchView('sessions')">
       <span class="nav-icon">📅</span>
       <span>Sessions</span>
       <span class="nav-badge" id="bottom-nav-count">0</span>
     </div>
-    <div class="bottom-nav-item" data-view="new" onclick="switchView('new')">
-      <span class="nav-icon">✏️</span>
-      <span>New</span>
+    <div class="bottom-nav-item" data-view="insights" onclick="switchView('insights')">
+      <span class="nav-icon">💡</span>
+      <span>Insights</span>
     </div>
   </div>
 </div>
@@ -1152,21 +1206,27 @@ function switchView(view) {
   document.getElementById('view-dashboard').style.display = 'none';
   document.getElementById('view-sessions').style.display = 'none';
   document.getElementById('view-new').style.display = 'none';
+  document.getElementById('view-insights').style.display = 'none';
 
   if (view === 'dashboard') {
     document.getElementById('view-dashboard').style.display = 'block';
-    document.getElementById('page-title').textContent = 'Dashboard';
-    document.getElementById('page-subtitle').textContent = 'Your practice at a glance';
+    document.getElementById('page-title').textContent = 'Home';
+    document.getElementById('page-subtitle').textContent = 'What to practice today';
     renderDashboard();
   } else if (view === 'sessions') {
     document.getElementById('view-sessions').style.display = 'block';
-    document.getElementById('page-title').textContent = 'Practice Sessions';
+    document.getElementById('page-title').textContent = 'Sessions';
     document.getElementById('page-subtitle').textContent = `${sessions.length} sessions logged`;
     renderSessions();
   } else if (view === 'new') {
     document.getElementById('view-new').style.display = 'block';
     document.getElementById('page-title').textContent = 'New Session';
     document.getElementById('page-subtitle').textContent = 'Log a new practice session by date';
+  } else if (view === 'insights') {
+    document.getElementById('view-insights').style.display = 'block';
+    document.getElementById('page-title').textContent = 'Insights';
+    document.getElementById('page-subtitle').textContent = 'Your practice stats and trends';
+    renderInsights();
   }
 }
 
@@ -1175,6 +1235,7 @@ function renderAll() {
   updateCounts();
   if (currentView === 'dashboard') renderDashboard();
   else if (currentView === 'sessions') renderSessions();
+  else if (currentView === 'insights') renderInsights();
 }
 
 function updateCounts() {
@@ -1187,6 +1248,9 @@ function updateCounts() {
 // ===== DASHBOARD =====
 function renderDashboard() {
   fetchAISuggestions();
+}
+
+function renderInsights() {
   renderStats();
   renderWeeklyChart();
 }
@@ -1202,18 +1266,18 @@ async function fetchAISuggestions() {
 
   if (allEntries.length === 0) {
     container.innerHTML = `
-      <div style="margin-bottom:16px; font-size:15px; line-height:1.6;">
+      <div style="margin-bottom:12px; font-size:15px; line-height:1.6;">
         Welcome to FretForward! Log your first practice session to get personalized AI suggestions.
       </div>
-      <div class="suggestion-grid">
+      <ul class="suggestion-list">
         ${Object.entries(CATEGORIES).map(([key, cat]) => {
-          return `<div class="suggestion-item high">
-            <div class="cat-label">${cat.label}</div>
-            <div class="rec-text">${cat.suggestions[0]}</div>
-            <div class="priority">⭐ Starter pick</div>
-          </div>`;
+          return `<li class="suggestion-list-item">
+            <span class="suggestion-bullet high"></span>
+            <span><span class="sugg-area">${cat.label}:</span> ${cat.suggestions[0]}</span>
+            <span class="sugg-priority">Starter</span>
+          </li>`;
         }).join('')}
-      </div>`;
+      </ul>`;
     return;
   }
 
@@ -1295,24 +1359,22 @@ Keep each recommendation to 1-2 sentences. Be specific and practical.`;
 
     if (suggestions.length === 0) throw new Error('No suggestions in response');
 
-    let html = `<div style="margin-bottom:16px; font-size:15px;">Based on your practice history, here's what I'd focus on today:</div><div class="suggestion-grid">`;
+    let html = `<div style="margin-bottom:12px; font-size:15px;">Based on your practice history, here's what I'd focus on today:</div><ul class="suggestion-list">`;
 
     suggestions.forEach(sugg => {
-      const catKey = sugg.area.toLowerCase();
-      const priorityClass = sugg.priority === 'high' ? 'high' : sugg.priority === 'medium' ? 'med' : 'low';
-      html += `<div class="suggestion-item ${priorityClass}">
-        <div class="cat-label">${sugg.area}</div>
-        <div class="rec-text">${sugg.recommendation}</div>
-        <div class="priority">${sugg.priority} priority</div>
-      </div>`;
+      const priorityClass = sugg.priority === 'high' ? 'high' : sugg.priority === 'medium' ? 'medium' : 'low';
+      html += `<li class="suggestion-list-item">
+        <span class="suggestion-bullet ${priorityClass}"></span>
+        <span><span class="sugg-area">${sugg.area}:</span> ${sugg.recommendation}</span>
+        <span class="sugg-priority">${sugg.priority}</span>
+      </li>`;
     });
 
-    html += '</div>';
+    html += '</ul>';
     container.innerHTML = html;
 
   } catch(err) {
     console.error('AI suggestion failed:', err);
-    // Fallback to rules-based
     container.innerHTML = `<div style="margin-bottom:12px; font-size:14px; color:var(--muted);">AI suggestions unavailable — showing basic recommendations:</div>`;
     renderRulesBasedSuggestions();
   }
@@ -1333,19 +1395,23 @@ function renderRulesBasedSuggestions() {
   });
 
   const sorted = Object.entries(categoryStats).sort((a, b) => b[1].priority - a[1].priority);
-  let html = '<div class="suggestion-grid">';
+  let html = '<ul class="suggestion-list">';
 
   sorted.forEach(([catKey, stats]) => {
     const cat = CATEGORIES[catKey];
     const catEntries = allEntries.filter(e => e.category === catKey);
     const suggIndex = catEntries.length % cat.suggestions.length;
     let sugg = cat.suggestions[suggIndex];
-    let priorityClass = stats.priority >= 60 ? 'high' : stats.priority >= 30 ? 'med' : 'low';
-    let priorityLabel = stats.daysSince === 999 ? 'Never practiced' : stats.daysSince >= 7 ? `⚠️ ${stats.daysSince}d since last` : stats.daysSince >= 4 ? `${stats.daysSince}d since last` : stats.daysSince >= 2 ? `Recent — keep going` : `Practiced recently ✓`;
-    html += `<div class="suggestion-item ${priorityClass}"><div class="cat-label">${cat.label}</div><div class="rec-text">${sugg}</div><div class="priority">${priorityLabel}</div></div>`;
+    let priorityClass = stats.priority >= 60 ? 'high' : stats.priority >= 30 ? 'medium' : 'low';
+    let priorityLabel = stats.daysSince === 999 ? 'Never' : stats.daysSince >= 7 ? `${stats.daysSince}d ago` : stats.daysSince >= 4 ? `${stats.daysSince}d ago` : stats.daysSince >= 2 ? 'Recent' : 'Today';
+    html += `<li class="suggestion-list-item">
+      <span class="suggestion-bullet ${priorityClass}"></span>
+      <span><span class="sugg-area">${cat.label}:</span> ${sugg}</span>
+      <span class="sugg-priority">${priorityLabel}</span>
+    </li>`;
   });
 
-  html += '</div>';
+  html += '</ul>';
   container.innerHTML += html;
 }
 
