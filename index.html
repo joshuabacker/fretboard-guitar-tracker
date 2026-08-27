@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎸 Fretboard — Guitar Practice Tracker</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --surface: #181b22;
+    --surface2: #1f232c;
+    --border: #2a2f3a;
+    --text: #e8e6e3;
+    --muted: #8b8d98;
+    --accent: #e8a87c;
+    --accent2: #c38d5f;
+    --scales: #5b9fd6;
+    --rhythm: #e8a87c;
+    --technique: #a8e87c;
+    --improv: #d878d8;
+    --repertoire: #f0d050;
+    --danger: #e85c5c;
+    --radius: 12px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar-header p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .nav-section {
+    padding: 16px 12px;
+  }
+
+  .nav-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding: 0 8px 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: var(--surface2); }
+  .nav-item.active { background: var(--surface2); font-weight: 600; }
+
+  .nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .nav-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* ===== MAIN ===== */
+  .main {
+    flex: 1;
+    padding: 32px 40px;
+    overflow-y: auto;
+    height: 100vh;
+  }
+
+  .main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .main-header h2 {
+    font-size: 26px;
+    font-weight: 800;
+  }
+
+  .main-header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  /* ===== SUGGESTION CARD ===== */
+  .suggestion-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .suggestion-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--scales), var(--rhythm), var(--technique), var(--improv), var(--repertoire));
+  }
+
+  .suggestion-card h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .suggestion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .suggestion-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+
+  .suggestion-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+
+  .suggestion-item .cat-label {
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .suggestion-item .rec-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .suggestion-item .priority {
+    font-size: 11px;
+    margin-top: 8px;
+    color: var(--muted);
+  }
+
+  .suggestion-item.high { border-left: 3px solid var(--danger); }
+  .suggestion-item.med { border-left: 3px solid var(--accent); }
+  .suggestion-item.low { border-left: 3px solid var(--muted); }
+
+  /* ===== STATS ===== */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ===== VOICE ENTRY ===== */
+  .voice-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  .voice-entry-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .mic-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+
+  .mic-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(232,168,124,0.4); }
+  .mic-btn.recording {
+    background: var(--danger);
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232,92,92,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(232,92,92,0); }
+  }
+
+  .voice-status {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .voice-status.listening {
+    color: var(--danger);
+    font-weight: 600;
+  }
+
+  .transcript-box {
+    min-height: 60px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+  }
+
+  .transcript-box.empty {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ===== MANUAL ENTRY FORM ===== */
+  .entry-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .form-group label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group select, .form-group input, .form-group textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .save-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s;
+    height: fit-content;
+  }
+
+  .save-btn:hover { transform: scale(1.02); }
+  .save-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+  /* ===== ENTRIES ===== */
+  .entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    transition: border-color 0.15s;
+  }
+
+  .entry:hover { border-color: var(--accent); }
+
+  .entry-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .entry-cat {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .entry-date {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .entry-duration {
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .entry-notes {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .entry-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .entry-delete:hover { color: var(--danger); background: rgba(232,92,92,0.1); }
+
+  /* ===== CATEGORY COLORS ===== */
+  .cat-scales { background: rgba(91,159,214,0.15); color: var(--scales); }
+  .cat-scales .nav-dot, .dot-scales { background: var(--scales); }
+  .cat-rhythm { background: rgba(232,168,124,0.15); color: var(--rhythm); }
+  .cat-rhythm .nav-dot, .dot-rhythm { background: var(--rhythm); }
+  .cat-technique { background: rgba(168,232,124,0.15); color: var(--technique); }
+  .cat-technique .nav-dot, .dot-technique { background: var(--technique); }
+  .cat-improvisation { background: rgba(216,120,216,0.15); color: var(--improv); }
+  .cat-improvisation .nav-dot, .dot-improv { background: var(--improv); }
+  .cat-repertoire { background: rgba(240,208,80,0.15); color: var(--repertoire); }
+  .cat-repertoire .nav-dot, .dot-repertoire { background: var(--repertoire); }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  /* ===== WEEKLY CHART ===== */
+  .weekly-chart {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  .weekly-chart h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .chart-bars {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    height: 120px;
+  }
+
+  .chart-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chart-bar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    min-height: 4px;
+    transition: height 0.3s;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .chart-day-label {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; }
+    .main { padding: 20px; }
+    .entry-form { grid-template-columns: 1fr; }
+  }
+
+  /* ===== CLOUD SYNC ===== */
+  .sync-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: var(--muted);
+  }
+  .sync-dot.online { background: var(--technique); }
+  .sync-dot.offline { background: var(--danger); }
+  .sync-dot.syncing { background: var(--repertoire); animation: pulse 1s infinite; }
+
+  .sync-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .sync-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: var(--shadow);
+  }
+  .sync-modal h3 {
+    font-size: 18px; font-weight: 700; margin-bottom: 16px;
+  }
+  .sync-modal p {
+    font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px;
+  }
+  .sync-modal .form-group { margin-bottom: 14px; }
+  .sync-modal .form-group input {
+    width: 100%; box-sizing: border-box;
+  }
+  .sync-modal .btn-row {
+    display: flex; gap: 10px; margin-top: 20px;
+  }
+  .sync-modal .btn {
+    flex: 1; padding: 10px 20px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .sync-modal .btn-primary { background: var(--accent); color: var(--bg); }
+  .sync-modal .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .sync-modal .setup-link {
+    color: var(--accent); font-size: 13px; text-decoration: none; display: block; margin-top: 12px;
+  }
+  .sync-modal .sql-block {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; font-family: monospace;
+    font-size: 12px; color: var(--text); white-space: pre-wrap;
+    margin: 12px 0; overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>🎸 Fretboard</h1>
+    <p>Guitar Practice Tracker</p>
+  </div>
+  <div class="nav-section">
+    <h3>View</h3>
+    <div class="nav-item active" data-view="dashboard">
+      <span class="nav-dot" style="background:var(--accent)"></span>
+      🏠 Dashboard
+    </div>
+    <div class="nav-item" data-view="all">
+      <span class="nav-dot" style="background:var(--muted)"></span>
+      📋 All Entries
+      <span class="nav-count" id="count-all">0</span>
+    </div>
+  </div>
+  <div class="nav-section">
+    <h3>Practice Areas</h3>
+    <div class="nav-item" data-view="scales">
+      <span class="nav-dot dot-scales"></span>
+      Scales
+      <span class="nav-count" id="count-scales">0</span>
+    </div>
+    <div class="nav-item" data-view="rhythm">
+      <span class="nav-dot dot-rhythm"></span>
+      Rhythm
+      <span class="nav-count" id="count-rhythm">0</span>
+    </div>
+    <div class="nav-item" data-view="technique">
+      <span class="nav-dot dot-technique"></span>
+      Technique
+      <span class="nav-count" id="count-technique">0</span>
+    </div>
+    <div class="nav-item" data-view="improvisation">
+      <span class="nav-dot dot-improv"></span>
+      Improvisation
+      <span class="nav-count" id="count-improvisation">0</span>
+    </div>
+    <div class="nav-item" data-view="repertoire">
+      <span class="nav-dot dot-repertoire"></span>
+      Repertoire
+      <span class="nav-count" id="count-repertoire">0</span>
+    </div>
+  </div>
+  <div class="nav-section">
+    <h3>Data</h3>
+    <div class="nav-item" onclick="exportData()" style="cursor:pointer;">
+      ⬇️ Export Data
+    </div>
+    <div class="nav-item" onclick="importData()" style="cursor:pointer;">
+      ⬆️ Import Data
+    </div>
+    <div class="nav-item" onclick="syncNow()" style="cursor:pointer;">
+      🔄 Sync Now
+    </div>
+    <div class="nav-item" onclick="clearAllData()" style="cursor:pointer; color:var(--danger);">
+      🗑️ Clear All Data
+    </div>
+  </div>
+  <div class="sync-status" id="sync-status-bar">
+    <span class="sync-dot" id="sync-dot"></span>
+    <span id="sync-status-text">Not connected</span>
+    <a href="#" onclick="showSyncModal(); return false;" style="margin-left:auto; font-size:12px; color:var(--accent); text-decoration:none;">Setup</a>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== */
+<div class="main">
+  <div class="main-header">
+    <div>
+      <h2 id="page-title">Dashboard</h2>
+      <p id="page-subtitle">Your practice at a glance</p>
+    </div>
+  </div>
+
+  <!-- Dashboard View -->
+  <div id="view-dashboard">
+    <!-- AI Suggestion Card -->
+    <div class="suggestion-card">
+      <h3>🎯 What to Practice Today</h3>
+      <div id="suggestion-content">
+        <p style="color:var(--muted)">Start logging practice sessions to get personalized recommendations.</p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row"></div>
+
+    <!-- Weekly Chart -->
+    <div class="weekly-chart">
+      <h3>📊 This Week</h3>
+      <div class="chart-bars" id="chart-bars"></div>
+    </div>
+  </div>
+
+  <!-- Entry View (Voice + Manual) -->
+  <div id="view-entry" style="display:none;">
+    <div class="voice-entry">
+      <div class="voice-entry-header">
+        <button class="mic-btn" id="mic-btn" onclick="toggleVoice()">🎙️</button>
+        <div>
+          <div style="font-size:16px; font-weight:600;">Voice Entry</div>
+          <div class="voice-status" id="voice-status">Click the mic and describe what you practiced</div>
+        </div>
+      </div>
+      <div class="transcript-box empty" id="transcript-box">Your transcript will appear here...</div>
+      <div class="entry-form">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="form-category">
+            <option value="scales">Scales</option>
+            <option value="rhythm">Rhythm</option>
+            <option value="technique">Technique</option>
+            <option value="improvisation">Improvisation</option>
+            <option value="repertoire">Repertoire</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Duration (min)</label>
+          <input type="number" id="form-duration" min="1" max="600" placeholder="20">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Notes</label>
+          <textarea id="form-notes" placeholder="What did you work on? (auto-filled from voice, editable)"></textarea>
+        </div>
+        <button class="save-btn" onclick="saveEntry()" style="grid-column: 1 / -1;">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category/List View -->
+  <div id="view-list" style="display:none;">
+    <div id="entries-container" class="entries-list"></div>
+  </div>
+</div>
+
+<!-- ===== SUPABASE ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ===== DATA STORE =====
+const CATEGORIES = {
+  scales: { label: 'Scales', color: 'var(--scales)', suggestions: [
+    'Run through major scale in 5 positions (cycle of keys)',
+    'Practice pentatonic scales across the neck — all 5 shapes',
+    'Work on modes: Ionian, Dorian, Phrygian up the neck',
+    'Scale sequences: 3-note, 4-note patterns up and back',
+    'Practice blues scale with bends in all 12 keys',
+    'Chromatic scale warmup with metronome at 80-120 BPM',
+    'Arpeggio shapes: major7, minor7, dom7 across fretboard'
+  ]},
+  rhythm: { label: 'Rhythm', color: 'var(--rhythm)', suggestions: [
+    'Strum patterns with metronome: quarter, eighth, 16th notes',
+    'Practice syncopation and off-beat accents',
+    'Work on timing with a drum track at different tempos',
+    'Practice chord changes in time: G-C-D-Em at 120 BPM',
+    'Learn a new rhythm style (funk, reggae, jazz swing)',
+    'Practice palm muting and percussive strumming',
+    'Work on 3/4 and 6/8 time signatures'
+  ]},
+  technique: { label: 'Technique', color: 'var(--technique)', suggestions: [
+    'Hammer-ons and pull-offs: trill exercises across strings',
+    'Bending practice: whole step, half step, pre-bends',
+    'Vibrato exercises — vary width and speed',
+    'Legato runs up and down the neck',
+    'Alternate picking exercises: string skipping patterns',
+    'Sweep picking: 3-string and 5-string arpeggios',
+    'Hybrid picking exercises with pick + fingers',
+    'Slap and pop technique for funky rhythm playing'
+  ]},
+  improvisation: { label: 'Improvisation', color: 'var(--improv)', suggestions: [
+    'Jam over a ii-V-I backing track in different keys',
+    'Improvise over a 12-bar blues — focus on phrasing',
+    'Practice targeting chord tones over a progression',
+    'Solo over a static vamp — limit yourself to 3 notes',
+    'Call and response: create and answer musical phrases',
+    'Improvisation with a looper pedal — layer melodies',
+    'Jam over a modal backing track (Dorian or Mixolydian)',
+    'Transcribe and emulate a solo from a favorite player'
+  ]},
+  repertoire: { label: 'Repertoire', color: 'var(--repertoire)', suggestions: [
+    'Learn the next section of a song you\'re working on',
+    'Review and polish a previously learned song',
+    'Memorize the chord progression to a new tune',
+    'Practice performing a song start to finish without stops',
+    'Work out a solo note-for-note from a recording',
+    'Learn the lyrics and chords for a song to sing and play',
+    'Add a new song to your setlist and practice transitions'
+  ]}
+};
+
+let entries = [];
+let currentView = 'dashboard';
+let recognition = null;
+let isRecording = false;
+
+// ===== CLOUD SYNC (Supabase) =====
+let supabaseClient = null;
+let syncEnabled = false;
+let lastSyncTime = 0;
+
+const SUPABSE_CONFIG_KEY = 'guitar-practice-supabase-config';
+
+function initSupabase() {
+  const config = getSupabaseConfig();
+  if (config && config.url && config.key) {
+    try {
+      supabaseClient = supabase.createClient(config.url, config.key);
+      syncEnabled = true;
+      updateSyncStatus('online', 'Cloud sync ready');
+      // Auto-pull on load
+      pullFromCloud();
+    } catch(e) {
+      console.error('Supabase init failed:', e);
+      updateSyncStatus('offline', 'Cloud sync error');
+    }
+  } else {
+    updateSyncStatus('offline', 'Not connected');
+  }
+}
+
+function getSupabaseConfig() {
+  try {
+    const stored = localStorage.getItem(SUPABSE_CONFIG_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch(e) { return null; }
+}
+
+function saveSupabaseConfig(url, key) {
+  localStorage.setItem(SUPABSE_CONFIG_KEY, JSON.stringify({ url, key }));
+}
+
+function clearSupabaseConfig() {
+  localStorage.removeItem(SUPABSE_CONFIG_KEY);
+  supabaseClient = null;
+  syncEnabled = false;
+  updateSyncStatus('offline', 'Not connected');
+}
+
+function updateSyncStatus(state, text) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-status-text');
+  if (!dot || !txt) return;
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = text;
+}
+
+async function pullFromCloud() {
+  if (!syncEnabled || !supabaseClient) return;
+  updateSyncStatus('syncing', 'Syncing...');
+  try {
+    const { data, error } = await supabaseClient
+      .from('practice_entries')
+      .select('*')
+      .order('timestamp', { ascending: false });
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      // Merge: cloud wins for new items, local for items not in cloud
+      const cloudIds = new Set(data.map(d => d.id));
+      const localOnly = entries.filter(e => !cloudIds.has(e.id));
+      const cloudEntries = data.map(d => ({
+        id: d.id,
+        category: d.category,
+        duration: d.duration,
+        notes: d.notes,
+        timestamp: d.timestamp
+      }));
+      entries = [...cloudEntries, ...localOnly];
+      saveDataLocal();
+      renderAll();
+      if (currentView !== 'dashboard') switchView(currentView);
+    }
+    lastSyncTime = Date.now();
+    updateSyncStatus('online', 'Synced ' + new Date().toLocaleTimeString());
+  } catch(err) {
+    console.error('Pull failed:', err);
+    updateSyncStatus('offline', 'Sync error — ' + err.message);
+  }
+}
+
+async function pushToCloud() {
+  if (!syncEnabled || !supabaseClient) return;
+  updateSyncStatus('syncing', 'Saving...');
+  try {
+    // Upsert all entries
+    const rows = entries.map(e => ({
+      id: e.id,
+      category: e.category,
+      duration: e.duration,
+      notes: e.notes,
+      timestamp: e.timestamp
+    }));
+    const { error } = await supabaseClient
+      .from('practice_entries')
+      .upsert(rows, { onConflict: 'id' });
+    if (error) throw error;
+    lastSyncTime = Date.now();
+    updateSyncStatus('online', 'Synced ' + new Date().toLocaleTimeString());
+  } catch(err) {
+    console.error('Push failed:', err);
+    updateSyncStatus('offline', 'Sync error — ' + err.message);
+  }
+}
+
+async function deleteFromCloud(id) {
+  if (!syncEnabled || !supabaseClient) return;
+  try {
+    await supabaseClient
+      .from('practice_entries')
+      .delete()
+      .eq('id', id);
+    await pushToCloud();
+  } catch(err) {
+    console.error('Cloud delete failed:', err);
+  }
+}
+
+function showSyncModal() {
+  const existing = document.getElementById('sync-modal-overlay');
+  if (existing) existing.remove();
+
+  const config = getSupabaseConfig();
+  const url = config ? config.url : '';
+  const key = config ? config.key : '';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sync-modal-overlay';
+  overlay.id = 'sync-modal-overlay';
+  overlay.innerHTML = `
+    <div class="sync-modal">
+      <h3>☁️ Cloud Sync Setup</h3>
+      <p>Connect a free Supabase project to sync your practice data across devices. Your data stays in your own database — nothing goes to a third party.</p>
+      <div class="form-group">
+        <label style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Supabase Project URL</label>
+        <input type="text" id="supabase-url" placeholder="https://xxxxx.supabase.co" value="${url}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; width:100%; box-sizing:border-box;">
+      </div>
+      <div class="form-group">
+        <label style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Supabase Anon Key</label>
+        <input type="text" id="supabase-key" placeholder="eyJhbGciOi..." value="${key}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; width:100%; box-sizing:border-box;">
+      </div>
+      <details style="margin: 16px 0;">
+        <summary style="cursor:pointer; font-size:13px; color:var(--accent);">📝 First time? Click for setup steps</summary>
+        <div style="margin-top:12px;">
+          <p style="font-size:13px; color:var(--muted); line-height:1.6;">
+            1. Go to <a href="https://supabase.com" target="_blank" style="color:var(--accent);">supabase.com</a> and create a free account<br>
+            2. Create a new project (pick any name)<br>
+            3. Go to Settings → API<br>
+            4. Copy your <b>Project URL</b> and <b>anon public key</b><br>
+            5. Go to SQL Editor and run this:
+          </p>
+          <div class="sql-block">create table practice_entries (
+  id text primary key,
+  category text not null,
+  duration int default 0,
+  notes text,
+  timestamp bigint not null
+);
+
+alter table practice_entries
+  enable row level security;
+
+create policy "Public access"
+  on practice_entries for all
+  using (true) with check (true);</div>
+          <p style="font-size:13px; color:var(--muted);">6. Paste the URL and key above, click "Connect"</p>
+        </div>
+      </details>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeSyncModal();">Cancel</button>
+        ${config ? '<button class="btn btn-secondary" style="color:var(--danger);" onclick="disconnectSync();">Disconnect</button>' : ''}
+        <button class="btn btn-primary" onclick="connectSync();">Connect</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeSyncModal();
+  });
+}
+
+function closeSyncModal() {
+  const el = document.getElementById('sync-modal-overlay');
+  if (el) el.remove();
+}
+
+async function connectSync() {
+  const url = document.getElementById('supabase-url').value.trim();
+  const key = document.getElementById('supabase-key').value.trim();
+
+  if (!url || !key) {
+    alert('Please enter both your Supabase URL and anon key.');
+    return;
+  }
+
+  try {
+    supabaseClient = supabase.createClient(url, key);
+    syncEnabled = true;
+    saveSupabaseConfig(url, key);
+    closeSyncModal();
+    updateSyncStatus('syncing', 'Connecting...');
+    await pullFromCloud();
+    // Push any local data to cloud
+    await pushToCloud();
+  } catch(err) {
+    alert('Failed to connect: ' + err.message);
+    syncEnabled = false;
+    updateSyncStatus('offline', 'Not connected');
+  }
+}
+
+function disconnectSync() {
+  clearSupabaseConfig();
+  closeSyncModal();
+  alert('Cloud sync disconnected. Your data is still saved locally on this device.');
+}
+
+async function syncNow() {
+  if (!syncEnabled) {
+    showSyncModal();
+    return;
+  }
+  updateSyncStatus('syncing', 'Syncing...');
+  await pullFromCloud();
+  await pushToCloud();
+}
+
+// ===== INIT =====
+function init() {
+  loadData();
+  setupNav();
+  renderAll();
+  initSupabase();
+}
+
+function loadData() {
+  const stored = localStorage.getItem('guitar-practice-entries');
+  if (stored) {
+    try { entries = JSON.parse(stored); } catch(e) { entries = []; }
+  }
+}
+
+function saveData() {
+  saveDataLocal();
+  pushToCloud();
+}
+
+function saveDataLocal() {
+  localStorage.setItem('guitar-practice-entries', JSON.stringify(entries));
+}
+
+// ===== NAVIGATION =====
+function setupNav() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    if (item.dataset.view) {
+      item.addEventListener('click', () => switchView(item.dataset.view));
+    }
+  });
+}
+
+function switchView(view) {
+  currentView = view;
+  
+  // Update active state
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.view === view) item.classList.add('active');
+  });
+
+  // Show/hide views
+  document.getElementById('view-dashboard').style.display = 'none';
+  document.getElementById('view-entry').style.display = 'none';
+  document.getElementById('view-list').style.display = 'none';
+
+  if (view === 'dashboard') {
+    document.getElementById('view-dashboard').style.display = 'block';
+    document.getElementById('page-title').textContent = 'Dashboard';
+    document.getElementById('page-subtitle').textContent = 'Your practice at a glance';
+    renderDashboard();
+  } else {
+    document.getElementById('view-list').style.display = 'block';
+    document.getElementById('view-entry').style.display = 'block';
+    
+    if (view === 'all') {
+      document.getElementById('page-title').textContent = 'All Entries';
+      document.getElementById('page-subtitle').textContent = `${entries.length} total practice sessions`;
+      renderEntries(entries);
+    } else {
+      const cat = CATEGORIES[view];
+      if (cat) {
+        document.getElementById('page-title').textContent = cat.label;
+        const catEntries = entries.filter(e => e.category === view);
+        document.getElementById('page-subtitle').textContent = `${catEntries.length} ${cat.label.toLowerCase()} sessions`;
+        renderEntries(catEntries);
+      }
+    }
+  }
+}
+
+// ===== RENDER =====
+function renderAll() {
+  updateCounts();
+  renderDashboard();
+}
+
+function updateCounts() {
+  document.getElementById('count-all').textContent = entries.length;
+  Object.keys(CATEGORIES).forEach(cat => {
+    const el = document.getElementById('count-' + cat);
+    if (el) el.textContent = entries.filter(e => e.category === cat).length;
+  });
+}
+
+function renderDashboard() {
+  renderSuggestions();
+  renderStats();
+  renderWeeklyChart();
+}
+
+// ===== AI SUGGESTIONS =====
+function renderSuggestions() {
+  const container = document.getElementById('suggestion-content');
+  
+  if (entries.length === 0) {
+    container.innerHTML = `
+      <div style="margin-bottom:16px; font-size:15px; line-height:1.6;">
+        Welcome to Fretboard! Here's a starter plan for a balanced session:
+      </div>
+      <div class="suggestion-grid">
+        ${Object.entries(CATEGORIES).map(([key, cat]) => {
+          const sugg = cat.suggestions[0];
+          return `<div class="suggestion-item high">
+            <div class="cat-label cat-${key}">${cat.label}</div>
+            <div class="rec-text">${sugg}</div>
+            <div class="priority">⭐ Starter pick</div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    return;
+  }
+
+  // Analyze practice history
+  const now = Date.now();
+  const categoryStats = {};
+  
+  Object.keys(CATEGORIES).forEach(cat => {
+    const catEntries = entries.filter(e => e.category === cat);
+    const lastPractice = catEntries.length > 0 
+      ? Math.max(...catEntries.map(e => e.timestamp)) 
+      : null;
+    const totalMinutes = catEntries.reduce((sum, e) => sum + (e.duration || 0), 0);
+    const sessionCount = catEntries.length;
+    
+    // Days since last practice (null = never)
+    const daysSince = lastPractice ? Math.floor((now - lastPractice) / (1000 * 60 * 60 * 24)) : 999;
+    
+    // Priority score: higher = more neglected
+    let priority = 0;
+    if (daysSince === 999) priority = 100; // never practiced
+    else if (daysSince >= 7) priority = 80 + Math.random() * 10;
+    else if (daysSince >= 4) priority = 60 + Math.random() * 10;
+    else if (daysSince >= 2) priority = 30 + Math.random() * 10;
+    else priority = 10 + Math.random() * 5;
+
+    // Boost categories that were mentioned as "struggling" in notes
+    const recentNotes = catEntries.slice(-3).map(e => e.notes || '').join(' ').toLowerCase();
+    if (recentNotes.match(/hard|difficult|strug|tough|can't|stuck|frustrat/)) {
+      priority += 15;
+    }
+
+    categoryStats[cat] = { daysSince, totalMinutes, sessionCount, priority, lastPractice };
+  });
+
+  // Sort by priority, pick top suggestions
+  const sorted = Object.entries(categoryStats).sort((a, b) => b[1].priority - a[1].priority);
+  
+  let html = `
+    <div style="margin-bottom:16px; font-size:15px; line-height:1.6;">
+      Based on your practice history, here's what I'd focus on today:
+    </div>
+    <div class="suggestion-grid">
+  `;
+
+  sorted.forEach(([catKey, stats]) => {
+    const cat = CATEGORIES[catKey];
+    let sugg;
+    
+    // Pick suggestion based on notes or cycle through suggestions
+    const catEntries = entries.filter(e => e.category === catKey);
+    const suggIndex = catEntries.length % cat.suggestions.length;
+    sugg = cat.suggestions[suggIndex];
+
+    // If last note mentioned a specific thing, build on it
+    const lastEntry = catEntries[catEntries.length - 1];
+    if (lastEntry && lastEntry.notes) {
+      const notes = lastEntry.notes.toLowerCase();
+      if (notes.includes('metronome') || notes.includes('bpm')) {
+        sugg = `Continue with metronome work — try 5-10 BPM faster than last time: ${sugg}`;
+      }
+      if (notes.includes('slow') || notes.includes('starter') || notes.includes('begin')) {
+        sugg = `Build on what you started: ${sugg}`;
+      }
+    }
+
+    let priorityClass = stats.priority >= 60 ? 'high' : stats.priority >= 30 ? 'med' : 'low';
+    let priorityLabel = stats.daysSince === 999 ? 'Never practiced' :
+                       stats.daysSince >= 7 ? `⚠️ ${stats.daysSince} days since last` :
+                       stats.daysSince >= 4 ? `${stats.daysSince} days since last` :
+                       stats.daysSince >= 2 ? `Recent — keep going` :
+                       `Practiced recently ✓`;
+    
+    html += `
+      <div class="suggestion-item ${priorityClass}">
+        <div class="cat-label cat-${catKey}">${cat.label}</div>
+        <div class="rec-text">${sugg}</div>
+        <div class="priority">${priorityLabel}</div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ===== STATS =====
+function renderStats() {
+  const container = document.getElementById('stats-row');
+  const now = Date.now();
+  const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  
+  const totalMin = entries.reduce((s, e) => s + (e.duration || 0), 0);
+  const weekMin = entries.filter(e => e.timestamp >= weekAgo).reduce((s, e) => s + (e.duration || 0), 0);
+  const weekCount = entries.filter(e => e.timestamp >= weekAgo).length;
+  const streak = calculateStreak();
+
+  container.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">${totalMin}</div>
+      <div class="stat-label">Total Minutes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${entries.length}</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${weekMin}</div>
+      <div class="stat-label">This Week (min)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${streak}</div>
+      <div class="stat-label">Day Streak 🔥</div>
+    </div>
+  `;
+}
+
+function calculateStreak() {
+  if (entries.length === 0) return 0;
+  const days = new Set();
+  entries.forEach(e => {
+    const d = new Date(e.timestamp);
+    days.set(d.toDateString());
+  });
+  let streak = 0;
+  let today = new Date();
+  // If no entry today, start from yesterday
+  if (!days.has(today.toDateString())) {
+    today.setDate(today.getDate() - 1);
+  }
+  while (days.has(today.toDateString())) {
+    streak++;
+    today.setDate(today.getDate() - 1);
+  }
+  return streak;
+}
+
+// ===== WEEKLY CHART =====
+function renderWeeklyChart() {
+  const container = document.getElementById('chart-bars');
+  const days = [];
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    const dayStr = d.toDateString();
+    const dayMin = entries
+      .filter(e => new Date(e.timestamp).toDateString() === dayStr)
+      .reduce((s, e) => s + (e.duration || 0), 0);
+    days.push({ date: d, minutes: dayMin, label: dayLabels[d.getDay()] });
+  }
+  
+  const maxMin = Math.max(...days.map(d => d.minutes), 60);
+  const colors = ['var(--scales)', 'var(--rhythm)', 'var(--technique)', 'var(--improv)', 'var(--repertoire)', 'var(--accent)', 'var(--accent2)'];
+  
+  container.innerHTML = days.map((d, i) => {
+    const height = d.minutes > 0 ? Math.max((d.minutes / maxMin) * 100, 8) : 4;
+    return `
+      <div class="chart-bar-group">
+        <div class="chart-bar" style="height:${height}%; background:${d.minutes > 0 ? colors[i % colors.length] : 'var(--border)'};">
+          ${d.minutes > 0 ? d.minutes + 'm' : ''}
+        </div>
+        <div class="chart-day-label">${d.label}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== ENTRIES =====
+function renderEntries(list) {
+  const container = document.getElementById('entries-container');
+  
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🎸</div>
+        <p>No entries yet. Start logging your practice sessions!</p>
+      </div>
+    `;
+    return;
+  }
+
+  const sorted = [...list].sort((a, b) => b.timestamp - a.timestamp);
+  
+  container.innerHTML = sorted.map(e => {
+    const cat = CATEGORIES[e.category] || { label: e.category, color: 'var(--muted)' };
+    const date = new Date(e.timestamp);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    
+    return `
+      <div class="entry">
+        <div class="entry-header">
+          <span class="entry-cat cat-${e.category}">${cat.label}</span>
+          ${e.duration ? `<span class="entry-duration">${e.duration} min</span>` : ''}
+          <span class="entry-date">${dateStr} at ${timeStr}</span>
+          <button class="entry-delete" onclick="deleteEntry('${e.id}')">✕</button>
+        </div>
+        ${e.notes ? `<div class="entry-notes">${escapeHtml(e.notes)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  saveData();
+  deleteFromCloud(id);
+  renderAll();
+  if (currentView !== 'dashboard') switchView(currentView);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ===== SAVE ENTRY =====
+function saveEntry() {
+  const category = document.getElementById('form-category').value;
+  const duration = parseInt(document.getElementById('form-duration').value) || 0;
+  const notes = document.getElementById('form-notes').value.trim();
+  
+  if (!notes && !duration) {
+    alert('Please add some notes or a duration.');
+    return;
+  }
+  
+  const entry = {
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+    category,
+    duration,
+    notes,
+    timestamp: Date.now()
+  };
+  
+  entries.push(entry);
+  saveData();
+  
+  // Reset form
+  document.getElementById('form-notes').value = '';
+  document.getElementById('form-duration').value = '';
+  document.getElementById('transcript-box').textContent = 'Your transcript will appear here...';
+  document.getElementById('transcript-box').classList.add('empty');
+  
+  renderAll();
+  if (currentView !== 'dashboard') switchView(currentView);
+}
+
+// ===== VOICE ENTRY =====
+function toggleVoice() {
+  if (isRecording) {
+    stopVoice();
+    return;
+  }
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Voice recognition is not supported in this browser. Try Chrome or Edge.');
+    return;
+  }
+  
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+  
+  let fullTranscript = '';
+  const transcriptBox = document.getElementById('transcript-box');
+  const voiceStatus = document.getElementById('voice-status');
+  const micBtn = document.getElementById('mic-btn');
+  
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        fullTranscript += transcript + ' ';
+      } else {
+        interim += transcript;
+      }
+    }
+    transcriptBox.textContent = (fullTranscript + interim).trim() || 'Listening...';
+    transcriptBox.classList.remove('empty');
+    
+    // Auto-fill the notes field
+    document.getElementById('form-notes').value = (fullTranscript + interim).trim();
+  };
+  
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+    if (event.error === 'no-speech') {
+      voiceStatus.textContent = 'No speech detected — try again';
+    } else if (event.error === 'not-allowed') {
+      voiceStatus.textContent = 'Microphone access denied';
+    } else {
+      voiceStatus.textContent = 'Error: ' + event.error;
+    }
+    stopVoice();
+  };
+  
+  recognition.onend = () => {
+    if (isRecording) {
+      // Restart if still recording (continuous mode can stop)
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+  
+  recognition.start();
+  isRecording = true;
+  micBtn.classList.add('recording');
+  micBtn.textContent = '⏹';
+  voiceStatus.textContent = 'Listening... speak naturally about your practice';
+  voiceStatus.classList.add('listening');
+  transcriptBox.textContent = 'Listening...';
+  transcriptBox.classList.remove('empty');
+}
+
+function stopVoice() {
+  if (recognition) {
+    isRecording = false;
+    recognition.stop();
+    const micBtn = document.getElementById('mic-btn');
+    micBtn.classList.remove('recording');
+    micBtn.textContent = '🎙️';
+    document.getElementById('voice-status').textContent = 'Transcribed — review and save';
+    document.getElementById('voice-status').classList.remove('listening');
+    
+    // Try to auto-detect category and duration from transcript
+    autoParseTranscript();
+  }
+}
+
+function autoParseTranscript() {
+  const text = document.getElementById('form-notes').value.toLowerCase();
+  
+  // Auto-detect category
+  const categoryMap = {
+    scales: ['scale', 'pentatonic', 'mode', 'ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian', 'chromatic', 'arpeggio'],
+    rhythm: ['rhythm', 'strum', 'chord change', 'timing', 'beat', 'groove', 'syncopat', 'time signature', 'meter'],
+    technique: ['technique', 'hammer', 'pull-off', 'bend', 'vibrato', 'legato', 'sweep', 'picking', 'hybrid', 'tap', 'slap'],
+    improvisation: ['improv', 'jam', 'solo', 'backing track', 'loop', 'phras', 'call and response'],
+    repertoire: ['song', 'tune', 'piece', 'repertoire', 'learn', 'memorize', 'lyrics', 'setlist', 'perform']
+  };
+  
+  let bestCat = null;
+  let bestScore = 0;
+  
+  Object.entries(categoryMap).forEach(([cat, keywords]) => {
+    let score = keywords.reduce((s, kw) => s + (text.includes(kw) ? 1 : 0), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      bestCat = cat;
+    }
+  });
+  
+  if (bestCat) {
+    document.getElementById('form-category').value = bestCat;
+  }
+  
+  // Auto-detect duration (e.g., "20 minutes", "30 min", "practiced for 15")
+  const durMatch = text.match(/(\d+)\s*(min|minute)/);
+  if (durMatch) {
+    document.getElementById('form-duration').value = parseInt(durMatch[1]);
+  }
+}
+
+// ===== EXPORT / IMPORT / CLEAR =====
+function exportData() {
+  const data = JSON.stringify(entries, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `guitar-practice-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (Array.isArray(imported)) {
+          entries = imported;
+          saveData();
+          renderAll();
+          switchView(currentView);
+          alert('Data imported successfully!');
+        } else {
+          alert('Invalid file format.');
+        }
+      } catch(err) {
+        alert('Error reading file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAllData() {
+  if (confirm('Are you sure? This will permanently delete all practice entries.')) {
+    entries = [];
+    saveDataLocal();
+    if (syncEnabled && supabaseClient) {
+      supabaseClient.from('practice_entries').delete().neq('id', '___never___')
+        .then(() => updateSyncStatus('online', 'Cleared'))
+        .catch(() => {});
+    }
+    renderAll();
+    switchView('dashboard');
+  }
+}
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
