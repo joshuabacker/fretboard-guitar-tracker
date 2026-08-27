@@ -5,56 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎸 FretForward — Guitar Practice Tracker</title>
 <style>
-  /* ===== 60s STRAT THEME ===== */
-  /* Dark mode (Sonic Blue / Daphne Blue strat) */
+  /* ===== FRET FORWARD DESIGN SYSTEM ===== */
+  /* Dark mode (default) */
   :root {
-    --bg: #1a1e2e;
-    --surface: #232940;
-    --surface2: #2d3550;
-    --border: #3a4468;
-    --text: #f0e8d8;
-    --muted: #9b95b8;
-    --accent: #d4a017;
-    --accent2: #b8860b;
-    --scales: #5b9fd6;
-    --rhythm: #e8a87c;
-    --technique: #a8e87c;
-    --improv: #d878d8;
-    --repertoire: #f0d050;
-    --danger: #c85c5c;
-    --strat-body: #6b8cc0;
-    --strat-pickup: #c0c0c0;
-    --strat-neck: #d4a574;
-    --radius: 10px;
-    --shadow: 0 4px 16px rgba(0,0,0,0.35);
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface2: #21262D;
+    --border: #30363D;
+    --text: #F0F6FC;
+    --muted: #8B949E;
+    --accent: #FF9E3B;
+    --accent-glow: rgba(255, 158, 59, 0.15);
+    --cyan: #2DE2E6;
+    --cyan-glow: rgba(45, 226, 230, 0.12);
+    --scales: #2DE2E6;
+    --rhythm: #FF9E3B;
+    --technique: #56D364;
+    --improv: #BC8CFF;
+    --repertoire: #FFD700;
+    --danger: #F85149;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 16px rgba(0,0,0,0.4);
+    --glow-amber: 0 0 20px -5px rgba(255, 158, 59, 0.3);
+    --glow-cyan: 0 0 20px -5px rgba(45, 226, 230, 0.3);
+    --font-sans: 'Geist Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Geist Mono', 'SF Mono', 'Cascadia Code', monospace;
+    --font-display: 'Instrument Serif', 'Fraunces', Georgia, serif;
   }
 
-  /* Light mode (Surf Green / Foam Green strat) */
+  /* Light mode */
   [data-theme="light"] {
-    --bg: #f4ead0;
-    --surface: #fff5e0;
-    --surface2: #f0e4c8;
-    --border: #d4c8a0;
-    --text: #2a2418;
-    --muted: #7a7060;
-    --accent: #b8860b;
-    --accent2: #9a7308;
-    --scales: #4a7a9e;
-    --rhythm: #c88a5c;
-    --technique: #5a8e4a;
-    --improv: #9e5c9e;
-    --repertoire: #b89020;
-    --danger: #a84444;
-    --strat-body: #90c8a0;
-    --strat-pickup: #e0e0e0;
-    --strat-neck: #c4a060;
-    --shadow: 0 4px 16px rgba(0,0,0,0.1);
+    --bg: #F6F8FA;
+    --surface: #FFFFFF;
+    --surface2: #F0F2F5;
+    --border: #D0D7DE;
+    --text: #1F2328;
+    --muted: #636C76;
+    --accent: #D4730E;
+    --accent-glow: rgba(212, 115, 14, 0.1);
+    --cyan: #099BCB;
+    --cyan-glow: rgba(9, 155, 203, 0.1);
+    --scales: #099BCB;
+    --rhythm: #D4730E;
+    --technique: #1A7F37;
+    --improv: #8250DF;
+    --repertoire: #B08800;
+    --danger: #CF222E;
+    --shadow: 0 4px 16px rgba(0,0,0,0.08);
+    --glow-amber: 0 4px 16px -4px rgba(212, 115, 14, 0.15);
+    --glow-cyan: 0 4px 16px -4px rgba(9, 155, 203, 0.15);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -66,7 +72,7 @@
   .sidebar {
     width: 240px;
     background: var(--surface);
-    border-right: 2px solid var(--accent);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     padding: 20px 0;
@@ -81,20 +87,20 @@
   }
 
   .sidebar-header h1 {
-    font-size: 24px;
-    font-weight: 800;
+    font-size: 28px;
+    font-weight: 400;
+    font-family: var(--font-display);
     display: flex;
     align-items: center;
     gap: 8px;
     color: var(--accent);
-    
   }
 
   .sidebar-header p {
     font-size: 12px;
     color: var(--muted);
     margin-top: 4px;
-    
+    font-family: var(--font-sans);
   }
 
   .nav-section { padding: 16px 12px; }
@@ -110,7 +116,7 @@
     font-size: 15px;
     color: var(--text);
     margin-bottom: 2px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .nav-item:hover { background: var(--surface2); }
@@ -137,7 +143,7 @@
     border-radius: 8px;
     font-size: 14px;
     color: var(--muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     transition: background 0.15s;
   }
   .theme-toggle:hover { background: var(--surface2); }
@@ -171,7 +177,7 @@
     padding: 6px 12px;
     border-top: 1px solid var(--border);
     margin-top: auto;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
   .sync-dot {
     width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
@@ -202,9 +208,9 @@
   }
 
   .main-header h2 {
-    font-size: 28px;
-    font-weight: 800;
-    
+    font-size: 32px;
+    font-weight: 400;
+    font-family: var(--font-display);
     color: var(--accent);
   }
 
@@ -217,11 +223,11 @@
   /* ===== SUGGESTION CARD ===== */
   .suggestion-card {
     background: var(--surface);
-    border: 2px solid var(--accent);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 24px;
     margin-bottom: 28px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow), var(--glow-amber);
     position: relative;
     overflow: hidden;
   }
@@ -230,7 +236,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 4px;
+    height: 3px;
     background: linear-gradient(90deg, var(--scales), var(--rhythm), var(--technique), var(--improv), var(--repertoire));
   }
 
@@ -240,7 +246,7 @@
     letter-spacing: 1px;
     color: var(--muted);
     margin-bottom: 12px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .suggestion-grid {
@@ -261,6 +267,7 @@
   .suggestion-item:hover {
     transform: translateY(-2px);
     border-color: var(--accent);
+    box-shadow: var(--glow-amber);
   }
 
   .suggestion-item .cat-label {
@@ -270,21 +277,21 @@
     align-items: center;
     gap: 6px;
     margin-bottom: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .suggestion-item .rec-text {
     font-size: 14px;
     color: var(--text);
     line-height: 1.5;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .suggestion-item .priority {
     font-size: 11px;
     margin-top: 8px;
     color: var(--muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .suggestion-item.high { border-left: 3px solid var(--danger); }
@@ -308,17 +315,17 @@
   }
 
   .stat-card .stat-value {
-    font-size: 30px;
-    font-weight: 800;
+    font-size: 36px;
+    font-weight: 400;
+    font-family: var(--font-display);
     color: var(--accent);
-    
   }
 
   .stat-card .stat-label {
     font-size: 12px;
     color: var(--muted);
     margin-top: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   /* ===== NEW SESSION FORM ===== */
@@ -332,11 +339,11 @@
   }
 
   .session-form h3 {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 400;
+    font-family: var(--font-display);
     margin-bottom: 16px;
     color: var(--accent);
-    
   }
 
   .date-picker-row {
@@ -357,7 +364,7 @@
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .form-group select, .form-group input, .form-group textarea {
@@ -367,7 +374,7 @@
     padding: 10px 14px;
     color: var(--text);
     font-size: 15px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
@@ -398,7 +405,7 @@
     font-weight: 700;
     cursor: pointer;
     height: fit-content;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     transition: transform 0.1s;
   }
   .add-btn:hover { transform: scale(1.03); }
@@ -414,7 +421,7 @@
     font-weight: 700;
     cursor: pointer;
     margin-top: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     transition: transform 0.1s;
   }
   .save-session-btn:hover { transform: scale(1.02); }
@@ -439,16 +446,16 @@
   }
 
   .session-date {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 400;
+    font-family: var(--font-display);
     color: var(--accent);
-    
   }
 
   .session-total {
     font-size: 13px;
     color: var(--muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .session-delete {
@@ -459,7 +466,7 @@
     font-size: 16px;
     padding: 4px 8px;
     border-radius: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     transition: color 0.15s, background 0.15s;
   }
   .session-delete:hover { color: var(--danger); background: rgba(200,92,92,0.1); }
@@ -495,13 +502,13 @@
     border-radius: 12px;
     white-space: nowrap;
     flex-shrink: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
-  .entry.scales .entry-cat { background: rgba(91,159,214,0.15); color: var(--scales); }
-  .entry.rhythm .entry-cat { background: rgba(232,168,124,0.15); color: var(--rhythm); }
-  .entry.technique .entry-cat { background: rgba(168,232,124,0.15); color: var(--technique); }
-  .entry.improvisation .entry-cat { background: rgba(216,120,216,0.15); color: var(--improv); }
-  .entry.repertoire .entry-cat { background: rgba(240,208,80,0.15); color: var(--repertoire); }
+  .entry.scales .entry-cat { background: var(--cyan-glow); color: var(--scales); }
+  .entry.rhythm .entry-cat { background: var(--accent-glow); color: var(--rhythm); }
+  .entry.technique .entry-cat { background: rgba(86,211,100,0.12); color: var(--technique); }
+  .entry.improvisation .entry-cat { background: rgba(188,140,255,0.12); color: var(--improv); }
+  .entry.repertoire .entry-cat { background: rgba(255,215,0,0.12); color: var(--repertoire); }
 
   .entry-body {
     flex: 1;
@@ -511,7 +518,7 @@
     font-size: 13px;
     color: var(--accent);
     font-weight: 600;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     margin-bottom: 4px;
   }
 
@@ -519,7 +526,7 @@
     font-size: 14px;
     line-height: 1.5;
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   .entry-delete {
@@ -531,7 +538,7 @@
     padding: 2px 6px;
     border-radius: 4px;
     flex-shrink: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     transition: color 0.15s;
   }
   .entry-delete:hover { color: var(--danger); }
@@ -558,7 +565,7 @@
     letter-spacing: 1px;
     color: var(--muted);
     margin-bottom: 16px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
   .chart-bars {
     display: flex;
@@ -583,13 +590,13 @@
     padding-bottom: 4px;
     font-size: 10px;
     color: rgba(255,255,255,0.7);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
     transition: height 0.3s;
   }
   .chart-day-label {
     font-size: 11px;
     color: var(--muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   /* ===== SYNC MODAL ===== */
@@ -600,20 +607,20 @@
   }
   .sync-modal {
     background: var(--surface);
-    border: 2px solid var(--accent);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 28px;
     max-width: 400px;
     width: 90%;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow), var(--glow-amber);
   }
-  .sync-modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--accent);  }
-  .sync-modal p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+  .sync-modal h3 { font-size: 22px; font-weight: 400; font-family: var(--font-display); margin-bottom: 12px; color: var(--accent); }
+  .sync-modal p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; font-family: var(--font-sans); }
   .sync-modal .btn-row { display: flex; gap: 10px; margin-top: 20px; }
   .sync-modal .btn {
     flex: 1; padding: 10px 20px; border-radius: 8px; border: none;
     font-size: 14px; font-weight: 600; cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
   .sync-modal .btn-primary { background: var(--accent); color: var(--bg); }
   .sync-modal .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
@@ -629,10 +636,11 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     background: var(--surface);
-    border-top: 2px solid var(--accent);
+    border-top: 1px solid var(--border);
     z-index: 100;
     padding: 0;
     padding-bottom: env(safe-area-inset-bottom, 0);
+    backdrop-filter: blur(12px);
   }
 
   .bottom-nav-inner {
@@ -701,8 +709,9 @@
   }
 
   .mobile-top-bar .app-name {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 22px;
+    font-weight: 400;
+    font-family: var(--font-display);
     color: var(--accent);
   }
 
@@ -776,6 +785,9 @@
     .mobile-top-bar { display: none !important; }
   }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
