@@ -623,13 +623,157 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+  /* ===== BOTTOM NAV (mobile) ===== */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 2px solid var(--accent);
+    z-index: 100;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .bottom-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 4px 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottom-nav-item:active { color: var(--accent); }
+  .bottom-nav-item.active { color: var(--accent); }
+
+  .bottom-nav-item .nav-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .bottom-nav-item .nav-badge {
+    position: absolute;
+    top: 4px;
+    right: 50%;
+    transform: translateX(16px);
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+
+  .bottom-nav-item { position: relative; }
+
+  /* ===== MOBILE TOP BAR ===== */
+  .mobile-top-bar {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-top-bar .app-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .mobile-top-bar .mini-theme-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ===== PAGING ===== */
+  .paging-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .paging-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, opacity 0.15s;
+  }
+
+  .paging-btn:hover { border-color: var(--accent); }
+  .paging-btn:disabled { opacity: 0.3; cursor: default; }
+
+  .paging-info {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ===== MOBILE MAIN PADDING ===== */
+  .main.has-bottom-nav { padding-bottom: 80px; }
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
     body { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; }
-    .main { padding: 20px; }
+    .sidebar { display: none; }
+    .main { 
+      padding: 16px 16px 80px 16px; 
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .main.has-bottom-nav { padding-bottom: 80px; }
+    .bottom-nav { display: block; }
+    .mobile-top-bar { display: flex; }
     .add-entry-row { grid-template-columns: 1fr; }
     .date-picker-row { flex-direction: column; }
+    .session-card-header { flex-wrap: wrap; gap: 8px; }
+    .session-delete { margin-left: auto; }
+    .main-header h2 { font-size: 22px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .suggestion-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (min-width: 769px) {
+    .mobile-top-bar { display: none !important; }
   }
 </style>
 </head>
@@ -673,7 +817,13 @@
 </div>
 
 <!-- ===== MAIN ===== -->
-<div class="main">
+<div class="main" id="main-content">
+  <!-- Mobile top bar -->
+  <div class="mobile-top-bar">
+    <div class="app-name">🎸 Fretboard</div>
+    <button class="mini-theme-toggle" onclick="toggleTheme()">🌙</button>
+  </div>
+
   <div class="main-header">
     <div>
       <h2 id="page-title">Dashboard</h2>
@@ -739,6 +889,25 @@
   </div>
 </div>
 
+<!-- ===== BOTTOM NAV (mobile) ===== -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bottom-nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+      <span class="nav-icon">🏠</span>
+      <span>Home</span>
+    </div>
+    <div class="bottom-nav-item" data-view="sessions" onclick="switchView('sessions')">
+      <span class="nav-icon">📅</span>
+      <span>Sessions</span>
+      <span class="nav-badge" id="bottom-nav-count">0</span>
+    </div>
+    <div class="bottom-nav-item" data-view="new" onclick="switchView('new')">
+      <span class="nav-icon">✏️</span>
+      <span>New</span>
+    </div>
+  </div>
+</div>
+
 <!-- ===== SUPABASE ===== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -798,6 +967,8 @@ const CATEGORIES = {
 // sessions = [{ id, date: "YYYY-MM-DD", entries: [{ id, category, duration, notes }] }]
 let sessions = [];
 let currentView = 'dashboard';
+let currentPage = 1;
+const SESSIONS_PER_PAGE = 5;
 
 // ===== SUPABASE (hardcoded) =====
 const SUPABASE_URL = 'https://dswzxbarerwtpccuahmi.supabase.co';
@@ -913,7 +1084,10 @@ function toggleTheme() {
   const next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('fretboard-theme', next);
-  document.getElementById('theme-label').textContent = next === 'dark' ? '🌙 Dark' : '☀️ Light';
+  const sidebarLabel = document.getElementById('theme-label');
+  if (sidebarLabel) sidebarLabel.textContent = next === 'dark' ? '🌙 Dark' : '☀️ Light';
+  const mobileToggle = document.querySelector('.mini-theme-toggle');
+  if (mobileToggle) mobileToggle.textContent = next === 'dark' ? '🌙' : '☀️';
 }
 
 // ===== DATA STORE =====
@@ -953,7 +1127,12 @@ function setupNav() {
 
 function switchView(view) {
   currentView = view;
+  currentPage = 1;
   document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.view === view) item.classList.add('active');
+  });
+  document.querySelectorAll('.bottom-nav-item').forEach(item => {
     item.classList.remove('active');
     if (item.dataset.view === view) item.classList.add('active');
   });
@@ -989,6 +1168,8 @@ function renderAll() {
 function updateCounts() {
   const el = document.getElementById('count-sessions');
   if (el) el.textContent = sessions.length;
+  const bottomEl = document.getElementById('bottom-nav-count');
+  if (bottomEl) bottomEl.textContent = sessions.length;
 }
 
 // ===== DASHBOARD =====
@@ -1214,11 +1395,16 @@ function renderWeeklyChart() {
 function renderSessions() {
   const container = document.getElementById('sessions-container');
   if (sessions.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="emoji">🎸</div><p>No sessions yet. Click "New Session" to log your first practice!</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="emoji">🎸</div><p>No sessions yet. Tap "New" to log your first practice!</p></div>`;
     return;
   }
   const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
-  container.innerHTML = sorted.map(s => {
+  const totalPages = Math.ceil(sorted.length / SESSIONS_PER_PAGE);
+  if (currentPage > totalPages) currentPage = 1;
+  const startIdx = (currentPage - 1) * SESSIONS_PER_PAGE;
+  const pageSessions = sorted.slice(startIdx, startIdx + SESSIONS_PER_PAGE);
+
+  let html = pageSessions.map(s => {
     const totalMin = s.entries.reduce((sum, e) => sum + (e.duration || 0), 0);
     const dateObj = new Date(s.date + 'T00:00:00');
     const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
@@ -1243,6 +1429,26 @@ function renderSessions() {
       </div>
     </div>`;
   }).join('');
+
+  if (totalPages > 1) {
+    html += `<div class="paging-controls">
+      <button class="paging-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>
+      <span class="paging-info">Page ${currentPage} of ${totalPages}</span>
+      <button class="paging-btn" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function changePage(delta) {
+  const totalPages = Math.ceil(sessions.length / SESSIONS_PER_PAGE);
+  const newPage = currentPage + delta;
+  if (newPage >= 1 && newPage <= totalPages) {
+    currentPage = newPage;
+    renderSessions();
+    document.getElementById('sessions-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function escapeHtml(text) {
