@@ -915,6 +915,93 @@
   /* ===== MOBILE MAIN PADDING ===== */
   .main.has-bottom-nav { padding-bottom: 80px; }
 
+  /* ===== AI PROMPT SETTINGS ===== */
+  .prompt-settings {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+
+  .prompt-settings h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent);
+    font-family: var(--font-sans);
+  }
+
+  .prompt-settings p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .prompt-textarea {
+    width: 100%;
+    min-height: 180px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+    font-family: var(--font-sans);
+    resize: vertical;
+  }
+
+  .prompt-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .prompt-save-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .prompt-save-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s;
+  }
+  .prompt-save-btn:hover { transform: scale(1.02); }
+
+  .prompt-reset-btn {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .prompt-saved-msg {
+    font-size: 13px;
+    color: var(--technique);
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .prompt-saved-msg.show { opacity: 1; }
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
     body { flex-direction: column; }
@@ -969,6 +1056,10 @@
     <div class="nav-item" data-view="insights">
       <span class="nav-dot" style="background:var(--cyan)"></span>
       💡 Insights
+    </div>
+    <div class="nav-item" data-view="settings">
+      <span class="nav-dot" style="background:var(--muted)"></span>
+      ⚙️ AI Settings
     </div>
   </div>
 
@@ -1031,6 +1122,29 @@
     <div class="weekly-chart">
       <h3>📊 This Week</h3>
       <div class="chart-bars" id="chart-bars"></div>
+    </div>
+  </div>
+
+  <!-- Settings View -->
+  <div id="view-settings" style="display:none;">
+    <div class="prompt-settings">
+      <h3>🎯 Practice Suggestions Instructions</h3>
+      <p>These instructions guide the AI that generates your daily "What to Practice" suggestions on the Home page. Edit them to change the AI's coaching style, focus areas, or output format.</p>
+      <textarea class="prompt-textarea" id="prompt-suggestions-text"></textarea>
+      <div class="prompt-save-row">
+        <button class="prompt-save-btn" onclick="savePromptSettings()">Save</button>
+        <button class="prompt-reset-btn" onclick="resetPromptSettings()">Reset to Default</button>
+      </div>
+      <div class="prompt-saved-msg" id="prompt-saved-msg">✓ Saved</div>
+    </div>
+    <div class="prompt-settings">
+      <h3>🤖 Weekly Insights Instructions</h3>
+      <p>These instructions guide the AI that analyzes your practice habits and progress on the Insights page. Edit them to change what the AI looks for, how it reports, or its tone.</p>
+      <textarea class="prompt-textarea" id="prompt-insights-text"></textarea>
+      <div class="prompt-save-row">
+        <button class="prompt-save-btn" onclick="savePromptSettings()">Save</button>
+        <button class="prompt-reset-btn" onclick="resetPromptSettings()">Reset to Default</button>
+      </div>
     </div>
   </div>
 
@@ -1097,6 +1211,10 @@
       <span class="nav-icon">💡</span>
       <span>Insights</span>
     </div>
+    <div class="bottom-nav-item" data-view="settings" onclick="switchView('settings')">
+      <span class="nav-icon">⚙️</span>
+      <span>Settings</span>
+    </div>
   </div>
 </div>
 
@@ -1161,6 +1279,86 @@ let sessions = [];
 let currentView = 'dashboard';
 let currentPage = 1;
 const SESSIONS_PER_PAGE = 5;
+
+// ===== AI PROMPT SETTINGS =====
+const DEFAULT_SUGGESTIONS_PROMPT = `You are a knowledgeable guitar practice coach. You give specific, actionable practice recommendations. Always respond with valid JSON when asked.
+
+Prioritize areas that haven't been practiced recently. If the student mentioned struggling with something, build on that. Give specific, actionable advice for each area — reference what they've worked on when possible.
+
+Respond in JSON format with this structure:
+{
+  "suggestions": [
+    {"area": "Scales", "recommendation": "...", "priority": "high|medium|low"},
+    {"area": "Rhythm", "recommendation": "...", "priority": "high|medium|low"},
+    {"area": "Technique", "recommendation": "...", "priority": "high|medium|low"},
+    {"area": "Improvisation", "recommendation": "...", "priority": "high|medium|low"},
+    {"area": "Repertoire", "recommendation": "...", "priority": "high|medium|low"}
+  ]
+}
+
+Keep each recommendation to 1-2 sentences. Be specific and practical.`;
+
+const DEFAULT_INSIGHTS_PROMPT = `You are a knowledgeable, encouraging guitar practice coach. You analyze practice data and give specific, actionable insights. Always respond with valid JSON when asked.
+
+Provide your analysis as JSON with this structure:
+{
+  "summary": "A 2-3 sentence overview of their practice this week",
+  "strengths": ["What they're doing well", "Another strength"],
+  "areas_to_improve": ["Specific actionable improvement with reasoning", "Another area"],
+  "patterns": "1-2 sentences about any patterns you notice (consistency, imbalances, etc.)",
+  "encouragement": "A supportive, specific note about their progress"
+}
+
+Be specific and reference their actual practice data. If they haven't practiced much this week, be encouraging but honest.`;
+
+const PROMPT_SETTINGS_KEY = 'fretboard-prompt-settings';
+
+function loadPromptSettings() {
+  try {
+    const stored = localStorage.getItem(PROMPT_SETTINGS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        suggestions: parsed.suggestions || DEFAULT_SUGGESTIONS_PROMPT,
+        insights: parsed.insights || DEFAULT_INSIGHTS_PROMPT
+      };
+    }
+  } catch(e) {}
+  return { suggestions: DEFAULT_SUGGESTIONS_PROMPT, insights: DEFAULT_INSIGHTS_PROMPT };
+}
+
+function savePromptSettings() {
+  const suggestions = document.getElementById('prompt-suggestions-text').value;
+  const insights = document.getElementById('prompt-insights-text').value;
+  localStorage.setItem(PROMPT_SETTINGS_KEY, JSON.stringify({ suggestions, insights }));
+
+  // Show saved message
+  const msg = document.getElementById('prompt-saved-msg');
+  if (msg) {
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2000);
+  }
+}
+
+function resetPromptSettings() {
+  document.getElementById('prompt-suggestions-text').value = DEFAULT_SUGGESTIONS_PROMPT;
+  document.getElementById('prompt-insights-text').value = DEFAULT_INSIGHTS_PROMPT;
+  localStorage.removeItem(PROMPT_SETTINGS_KEY);
+  const msg = document.getElementById('prompt-saved-msg');
+  if (msg) {
+    msg.textContent = '✓ Reset to defaults';
+    msg.classList.add('show');
+    setTimeout(() => { msg.classList.remove('show'); msg.textContent = '✓ Saved'; }, 2000);
+  }
+}
+
+function initPromptSettings() {
+  const settings = loadPromptSettings();
+  const suggEl = document.getElementById('prompt-suggestions-text');
+  const insEl = document.getElementById('prompt-insights-text');
+  if (suggEl) suggEl.value = settings.suggestions;
+  if (insEl) insEl.value = settings.insights;
+}
 
 // ===== SUPABASE (hardcoded) =====
 const SUPABASE_URL = 'https://dswzxbarerwtpccuahmi.supabase.co';
@@ -1307,6 +1505,7 @@ function init() {
   loadTheme();
   loadData();
   setupNav();
+  initPromptSettings();
   document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
   renderAll();
   initSupabase();
@@ -1336,6 +1535,7 @@ function switchView(view) {
   document.getElementById('view-sessions').style.display = 'none';
   document.getElementById('view-new').style.display = 'none';
   document.getElementById('view-insights').style.display = 'none';
+  document.getElementById('view-settings').style.display = 'none';
 
   if (view === 'dashboard') {
     document.getElementById('view-dashboard').style.display = 'block';
@@ -1356,6 +1556,11 @@ function switchView(view) {
     document.getElementById('page-title').textContent = 'Insights';
     document.getElementById('page-subtitle').textContent = 'Your practice stats and trends';
     renderInsights();
+  } else if (view === 'settings') {
+    document.getElementById('view-settings').style.display = 'block';
+    document.getElementById('page-title').textContent = 'AI Settings';
+    document.getElementById('page-subtitle').textContent = 'Edit instructions for AI suggestions and insights';
+    initPromptSettings();
   }
 }
 
@@ -1439,25 +1644,14 @@ async function fetchAISuggestions() {
     return `${label}: ${stats.sessions} sessions, last on ${stats.lastPracticed} (${stats.daysSince}d ago)${stats.recentNotes ? ', recent notes: ' + stats.recentNotes : ''}`;
   }).join('\n');
 
-  const prompt = `You are a guitar practice coach. Based on the student's practice history below, suggest what to practice today across 5 areas: Scales, Rhythm, Technique, Improvisation, and Repertoire.
+  const promptSettings = loadPromptSettings();
 
-Prioritize areas that haven't been practiced recently. If the student mentioned struggling with something, build on that. Give specific, actionable advice for each area — reference what they've worked on when possible.
+  const prompt = `Based on the student's practice history below, suggest what to practice today across 5 areas: Scales, Rhythm, Technique, Improvisation, and Repertoire.
 
 Practice History:
 ${historyText}
 
-Respond in JSON format with this exact structure:
-{
-  "suggestions": [
-    {"area": "Scales", "recommendation": "...", "priority": "high|medium|low"},
-    {"area": "Rhythm", "recommendation": "...", "priority": "high|medium|low"},
-    {"area": "Technique", "recommendation": "...", "priority": "high|medium|low"},
-    {"area": "Improvisation", "recommendation": "...", "priority": "high|medium|low"},
-    {"area": "Repertoire", "recommendation": "...", "priority": "high|medium|low"}
-  ]
-}
-
-Keep each recommendation to 1-2 sentences. Be specific and practical.`;
+${promptSettings.suggestions}`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1621,20 +1815,13 @@ RECENT SESSION DATES:
 ${sessions.slice(-10).sort((a,b) => b.date.localeCompare(a.date)).map(s => `- ${s.date}: ${s.entries.length} entries, ${s.entries.reduce((sum, e) => sum + (e.duration || 0), 0)} min`).join('\n')}
 `;
 
-  const prompt = `You are a guitar practice coach analyzing a student's practice data. Based on the data below, provide insightful observations about their practice habits and progress.
+  const promptSettings = loadPromptSettings();
+
+  const prompt = `Based on the data below, provide insightful observations about the student's practice habits and progress.
 
 ${summary}
 
-Provide your analysis as JSON with this structure:
-{
-  "summary": "A 2-3 sentence overview of their practice this week",
-  "strengths": ["What they're doing well", "Another strength"],
-  "areas_to_improve": ["Specific actionable improvement with reasoning", "Another area"],
-  "patterns": "1-2 sentences about any patterns you notice (consistency, imbalances, etc.)",
-  "encouragement": "A supportive, specific note about their progress"
-}
-
-Be specific and reference their actual practice data. If they haven't practiced much this week, be encouraging but honest.`;
+${promptSettings.insights}`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
