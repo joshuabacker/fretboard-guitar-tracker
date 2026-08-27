@@ -578,6 +578,84 @@
   }
   .entry-delete:hover { color: var(--danger); }
 
+  /* ===== INLINE EDIT MODE ===== */
+  .entry.editing {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .entry-edit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: end;
+    width: 100%;
+  }
+
+  .entry-edit-row .form-group { gap: 2px; }
+  .entry-edit-row select, .entry-edit-row input {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .entry-edit-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .entry-edit-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s;
+  }
+
+  .entry-edit-btn:hover { border-color: var(--accent); }
+  .entry-edit-btn.save { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .entry-edit-btn.danger { color: var(--danger); }
+
+  .session-edit-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .session-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .session-add-entry-btn {
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: var(--font-sans);
+    text-align: center;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .session-add-entry-btn:hover { border-color: var(--accent); color: var(--accent); }
+
   /* ===== EMPTY STATE ===== */
   .empty-state {
     text-align: center;
@@ -1485,24 +1563,15 @@ function renderSessions() {
     const totalMin = s.entries.reduce((sum, e) => sum + (e.duration || 0), 0);
     const dateObj = new Date(s.date + 'T00:00:00');
     const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-    return `<div class="session-card">
+    return `<div class="session-card" id="session-${s.id}">
       <div class="session-card-header">
         <span class="session-date">${dateStr}</span>
         <span class="session-total">${s.entries.length} entries · ${totalMin} min</span>
-        <button class="session-delete" onclick="deleteSession('${s.id}')">✕ Delete</button>
+        <button class="session-edit-btn" onclick="toggleEditSession('${s.id}')">Edit</button>
+        <button class="session-delete" onclick="deleteSession('${s.id}')">✕</button>
       </div>
-      <div class="session-entries">
-        ${s.entries.map(e => {
-          const cat = CATEGORIES[e.category] || { label: e.category };
-          return `<div class="entry ${e.category}">
-            <span class="entry-cat">${cat.label}</span>
-            <div class="entry-body">
-              ${e.duration ? `<div class="entry-duration">${e.duration} min</div>` : ''}
-              ${e.notes ? `<div class="entry-notes">${escapeHtml(e.notes)}</div>` : ''}
-            </div>
-            <button class="entry-delete" onclick="deleteEntry('${s.id}','${e.id}')">✕</button>
-          </div>`;
-        }).join('')}
+      <div class="session-entries" id="entries-${s.id}">
+        ${s.entries.map(e => renderEntryDisplay(s.id, e)).join('')}
       </div>
     </div>`;
   }).join('');
@@ -1528,6 +1597,135 @@ function changePage(delta) {
   }
 }
 
+// ===== INLINE EDIT FUNCTIONS =====
+function renderEntryDisplay(sessionId, e) {
+  const cat = CATEGORIES[e.category] || { label: e.category };
+  return `<div class="entry ${e.category}" id="entry-${e.id}">
+    <span class="entry-cat">${cat.label}</span>
+    <div class="entry-body">
+      ${e.duration ? `<div class="entry-duration">${e.duration} min</div>` : ''}
+      ${e.notes ? `<div class="entry-notes">${escapeHtml(e.notes)}</div>` : ''}
+    </div>
+    <button class="entry-delete" onclick="deleteEntry('${sessionId}','${e.id}')">✕</button>
+  </div>`;
+}
+
+function toggleEditSession(sessionId) {
+  const container = document.getElementById('entries-' + sessionId);
+  if (!container) return;
+  const session = sessions.find(s => s.id === sessionId);
+  if (!session) return;
+
+  // Check if already in edit mode
+  const isEditing = container.querySelector('.entry.editing');
+  if (isEditing) {
+    // Save all entries before exiting edit mode
+    session.entries.forEach(e => {
+      const catEl = document.getElementById('edit-cat-' + e.id);
+      const durEl = document.getElementById('edit-dur-' + e.id);
+      const notesEl = document.getElementById('edit-notes-' + e.id);
+      if (catEl) e.category = catEl.value;
+      if (durEl) e.duration = parseInt(durEl.value) || 0;
+      if (notesEl) e.notes = notesEl.value.trim();
+    });
+    saveData();
+    // Exit edit mode — re-render display
+    container.innerHTML = session.entries.map(e => renderEntryDisplay(sessionId, e)).join('') +
+      `<button class="session-add-entry-btn" onclick="addEntryToExistingSession('${sessionId}')">+ Add Entry</button>`;
+    // Update header
+    const editBtn = document.querySelector('#session-' + sessionId + ' .session-edit-btn');
+    if (editBtn) editBtn.textContent = 'Edit';
+    const totalMin = session.entries.reduce((sum, e) => sum + (e.duration || 0), 0);
+    const totalEl = document.querySelector('#session-' + sessionId + ' .session-total');
+    if (totalEl) totalEl.textContent = `${session.entries.length} entries · ${totalMin} min`;
+    renderAll();
+  } else {
+    // Enter edit mode
+    container.innerHTML = session.entries.map(e => renderEntryEdit(sessionId, e)).join('') +
+      `<button class="session-add-entry-btn" onclick="addEntryToExistingSession('${sessionId}')">+ Add Entry</button>`;
+    const editBtn = document.querySelector('#session-' + sessionId + ' .session-edit-btn');
+    if (editBtn) editBtn.textContent = 'Done';
+  }
+}
+
+function renderEntryEdit(sessionId, e) {
+  return `<div class="entry editing ${e.category}" id="entry-${e.id}">
+    <div class="entry-edit-row">
+      <div class="form-group">
+        <label>Area</label>
+        <select id="edit-cat-${e.id}">
+          <option value="scales" ${e.category === 'scales' ? 'selected' : ''}>Scales</option>
+          <option value="rhythm" ${e.category === 'rhythm' ? 'selected' : ''}>Rhythm</option>
+          <option value="technique" ${e.category === 'technique' ? 'selected' : ''}>Technique</option>
+          <option value="improvisation" ${e.category === 'improvisation' ? 'selected' : ''}>Improvisation</option>
+          <option value="repertoire" ${e.category === 'repertoire' ? 'selected' : ''}>Repertoire</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Duration (min)</label>
+        <input type="number" id="edit-dur-${e.id}" min="0" max="600" value="${e.duration || ''}">
+      </div>
+      <button class="entry-edit-btn danger" onclick="deleteEntry('${sessionId}','${e.id}'); toggleEditSession('${sessionId}');">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <input type="text" id="edit-notes-${e.id}" value="${escapeHtml(e.notes || '')}" placeholder="What did you work on?" oninput="autoParseEditNotes('${e.id}')">
+    </div>
+  </div>`;
+}
+
+function autoParseEditNotes(entryId) {
+  const text = (document.getElementById('edit-notes-' + entryId)?.value || '').toLowerCase();
+  const catSelect = document.getElementById('edit-cat-' + entryId);
+  const durInput = document.getElementById('edit-dur-' + entryId);
+  if (!catSelect || !durInput) return;
+
+  const categoryMap = {
+    scales: ['scale', 'pentatonic', 'mode', 'ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian', 'chromatic', 'arpeggio'],
+    rhythm: ['rhythm', 'strum', 'chord change', 'timing', 'beat', 'groove', 'syncopat', 'time signature', 'meter'],
+    technique: ['technique', 'hammer', 'pull-off', 'bend', 'vibrato', 'legato', 'sweep', 'picking', 'hybrid', 'tap', 'slap'],
+    improvisation: ['improv', 'jam', 'solo', 'backing track', 'loop', 'phras', 'call and response'],
+    repertoire: ['song', 'tune', 'piece', 'repertoire', 'learn', 'memorize', 'lyrics', 'setlist', 'perform']
+  };
+  let bestCat = null, bestScore = 0;
+  Object.entries(categoryMap).forEach(([cat, keywords]) => {
+    let score = keywords.reduce((s, kw) => s + (text.includes(kw) ? 1 : 0), 0);
+    if (score > bestScore) { bestScore = score; bestCat = cat; }
+  });
+  if (bestCat) catSelect.value = bestCat;
+  const durMatch = text.match(/(\d+)\s*(min|minute)/);
+  if (durMatch) durInput.value = parseInt(durMatch[1]);
+}
+
+function saveEntryEdit(sessionId, entryId) {
+  const session = sessions.find(s => s.id === sessionId);
+  if (!session) return;
+  const entry = session.entries.find(e => e.id === entryId);
+  if (!entry) return;
+
+  entry.category = document.getElementById('edit-cat-' + entryId).value;
+  entry.duration = parseInt(document.getElementById('edit-dur-' + entryId).value) || 0;
+  entry.notes = document.getElementById('edit-notes-' + entryId).value.trim();
+
+  saveData();
+  renderAll();
+  if (currentView === 'sessions') renderSessions();
+}
+
+function addEntryToExistingSession(sessionId) {
+  const session = sessions.find(s => s.id === sessionId);
+  if (!session) return;
+  const newId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+  session.entries.push({ id: newId, category: 'scales', duration: 0, notes: '' });
+  saveData();
+  // Re-render the session in edit mode with the new entry
+  const container = document.getElementById('entries-' + sessionId);
+  if (container) {
+    container.innerHTML = session.entries.map(e => renderEntryEdit(sessionId, e)).join('') +
+      `<button class="session-add-entry-btn" onclick="addEntryToExistingSession('${sessionId}')">+ Add Entry</button>`;
+  }
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -1548,11 +1746,25 @@ function deleteEntry(sessionId, entryId) {
     session.entries = session.entries.filter(e => e.id !== entryId);
     if (session.entries.length === 0) {
       sessions = sessions.filter(s => s.id !== sessionId);
+      saveData();
+      renderAll();
+      if (currentView === 'sessions') renderSessions();
+    } else {
+      saveData();
+      renderAll();
+      if (currentView === 'sessions') {
+        // Check if currently in edit mode
+        const container = document.getElementById('entries-' + sessionId);
+        const isEditing = container && container.querySelector('.entry.editing');
+        if (isEditing) {
+          // Stay in edit mode
+          container.innerHTML = session.entries.map(e => renderEntryEdit(sessionId, e)).join('') +
+            `<button class="session-add-entry-btn" onclick="addEntryToExistingSession('${sessionId}')">+ Add Entry</button>`;
+        } else {
+          renderSessions();
+        }
+      }
     }
-    saveData();
-    pushToCloud();
-    renderAll();
-    if (currentView === 'sessions') renderSessions();
   }
 }
 
