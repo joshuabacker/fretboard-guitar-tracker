@@ -54,7 +54,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -87,14 +87,14 @@
     align-items: center;
     gap: 8px;
     color: var(--accent);
-    font-style: italic;
+    
   }
 
   .sidebar-header p {
     font-size: 12px;
     color: var(--muted);
     margin-top: 4px;
-    font-style: italic;
+    
   }
 
   .nav-section { padding: 16px 12px; }
@@ -110,7 +110,7 @@
     font-size: 15px;
     color: var(--text);
     margin-bottom: 2px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .nav-item:hover { background: var(--surface2); }
@@ -137,7 +137,7 @@
     border-radius: 8px;
     font-size: 14px;
     color: var(--muted);
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     transition: background 0.15s;
   }
   .theme-toggle:hover { background: var(--surface2); }
@@ -171,7 +171,7 @@
     padding: 6px 12px;
     border-top: 1px solid var(--border);
     margin-top: auto;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
   .sync-dot {
     width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
@@ -204,7 +204,7 @@
   .main-header h2 {
     font-size: 28px;
     font-weight: 800;
-    font-style: italic;
+    
     color: var(--accent);
   }
 
@@ -240,7 +240,7 @@
     letter-spacing: 1px;
     color: var(--muted);
     margin-bottom: 12px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .suggestion-grid {
@@ -270,21 +270,21 @@
     align-items: center;
     gap: 6px;
     margin-bottom: 8px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .suggestion-item .rec-text {
     font-size: 14px;
     color: var(--text);
     line-height: 1.5;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .suggestion-item .priority {
     font-size: 11px;
     margin-top: 8px;
     color: var(--muted);
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .suggestion-item.high { border-left: 3px solid var(--danger); }
@@ -311,14 +311,14 @@
     font-size: 30px;
     font-weight: 800;
     color: var(--accent);
-    font-style: italic;
+    
   }
 
   .stat-card .stat-label {
     font-size: 12px;
     color: var(--muted);
     margin-top: 4px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   /* ===== NEW SESSION FORM ===== */
@@ -336,7 +336,7 @@
     font-weight: 700;
     margin-bottom: 16px;
     color: var(--accent);
-    font-style: italic;
+    
   }
 
   .date-picker-row {
@@ -357,7 +357,7 @@
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .form-group select, .form-group input, .form-group textarea {
@@ -367,7 +367,7 @@
     padding: 10px 14px;
     color: var(--text);
     font-size: 15px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
@@ -398,7 +398,7 @@
     font-weight: 700;
     cursor: pointer;
     height: fit-content;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     transition: transform 0.1s;
   }
   .add-btn:hover { transform: scale(1.03); }
@@ -414,7 +414,7 @@
     font-weight: 700;
     cursor: pointer;
     margin-top: 8px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     transition: transform 0.1s;
   }
   .save-session-btn:hover { transform: scale(1.02); }
@@ -442,13 +442,13 @@
     font-size: 18px;
     font-weight: 700;
     color: var(--accent);
-    font-style: italic;
+    
   }
 
   .session-total {
     font-size: 13px;
     color: var(--muted);
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .session-delete {
@@ -459,7 +459,7 @@
     font-size: 16px;
     padding: 4px 8px;
     border-radius: 4px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     transition: color 0.15s, background 0.15s;
   }
   .session-delete:hover { color: var(--danger); background: rgba(200,92,92,0.1); }
@@ -495,7 +495,7 @@
     border-radius: 12px;
     white-space: nowrap;
     flex-shrink: 0;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
   .entry.scales .entry-cat { background: rgba(91,159,214,0.15); color: var(--scales); }
   .entry.rhythm .entry-cat { background: rgba(232,168,124,0.15); color: var(--rhythm); }
@@ -511,7 +511,7 @@
     font-size: 13px;
     color: var(--accent);
     font-weight: 600;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     margin-bottom: 4px;
   }
 
@@ -519,7 +519,7 @@
     font-size: 14px;
     line-height: 1.5;
     color: var(--text);
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   .entry-delete {
@@ -531,7 +531,7 @@
     padding: 2px 6px;
     border-radius: 4px;
     flex-shrink: 0;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     transition: color 0.15s;
   }
   .entry-delete:hover { color: var(--danger); }
@@ -558,7 +558,7 @@
     letter-spacing: 1px;
     color: var(--muted);
     margin-bottom: 16px;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
   .chart-bars {
     display: flex;
@@ -583,13 +583,13 @@
     padding-bottom: 4px;
     font-size: 10px;
     color: rgba(255,255,255,0.7);
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     transition: height 0.3s;
   }
   .chart-day-label {
     font-size: 11px;
     color: var(--muted);
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   /* ===== SYNC MODAL ===== */
@@ -607,13 +607,13 @@
     width: 90%;
     box-shadow: var(--shadow);
   }
-  .sync-modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--accent); font-style: italic; }
-  .sync-modal p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; font-family: -apple-system, sans-serif; }
+  .sync-modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--accent);  }
+  .sync-modal p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
   .sync-modal .btn-row { display: flex; gap: 10px; margin-top: 20px; }
   .sync-modal .btn {
     flex: 1; padding: 10px 20px; border-radius: 8px; border: none;
     font-size: 14px; font-weight: 600; cursor: pointer;
-    font-family: -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
   .sync-modal .btn-primary { background: var(--accent); color: var(--bg); }
   .sync-modal .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
@@ -1004,7 +1004,7 @@ function renderSuggestions() {
 
   if (allEntries.length === 0) {
     container.innerHTML = `
-      <div style="margin-bottom:16px; font-size:15px; line-height:1.6; font-family:-apple-system,sans-serif;">
+      <div style="margin-bottom:16px; font-size:15px; line-height:1.6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
         Welcome to Fretboard! Here's a starter plan for a balanced session:
       </div>
       <div class="suggestion-grid">
@@ -1041,7 +1041,7 @@ function renderSuggestions() {
 
   const sorted = Object.entries(categoryStats).sort((a, b) => b[1].priority - a[1].priority);
 
-  let html = `<div style="margin-bottom:16px; font-size:15px; font-family:-apple-system,sans-serif;">Based on your practice history, here's what I'd focus on today:</div><div class="suggestion-grid">`;
+  let html = `<div style="margin-bottom:16px; font-size:15px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">Based on your practice history, here's what I'd focus on today:</div><div class="suggestion-grid">`;
 
   sorted.forEach(([catKey, stats]) => {
     const cat = CATEGORIES[catKey];
